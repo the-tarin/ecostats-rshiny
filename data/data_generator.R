@@ -35,4 +35,4 @@ generate_data <- function(num_samples) {
 
 
 fake_survey_df <- generate_data(50)
-save(fake_survey_df, file = "fake_survey.RData")
+save(fake_survey_df, file = "data/fake_survey.RData")

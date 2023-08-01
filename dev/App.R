@@ -1,10 +1,14 @@
 library(shiny)
+library(leaflet)
 
 # Define UI for app that draws a histogram ----
+# fluidpage automatically adjust dimensions of page
 ui <- fluidPage(
   h1("this is a good test"),
   # App title ----
   titlePanel("Hello Shiny!"),
+  
+  leafletOutput(outputId = "leafletMap"),
   
   # Sidebar layout with input and output definitions ----
   sidebarLayout(
