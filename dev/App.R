@@ -2,20 +2,19 @@ library(shiny)
 
 # Define UI for app that draws a histogram ----
 ui <- fluidPage(
-  
+  h1("this is a good test"),
   # App title ----
   titlePanel("Hello Shiny!"),
   
   # Sidebar layout with input and output definitions ----
   sidebarLayout(
-    
+    position = "right",
     # Sidebar panel for inputs ----
     sidebarPanel(
-      
       # Input: Slider for the number of bins ----
       sliderInput(inputId = "bins",
                   label = "Number of bins:",
-                  min = 5,
+                  min = 10,
                   max = 50,
                   value = 30)
       
