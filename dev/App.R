@@ -10,6 +10,10 @@ ui <- fluidPage(
   
   leafletOutput(outputId = "leafletMap"),
   
+  # only accept RData for now
+  fileInput("file", "Choose RData File",
+            accept = c(".RData")),
+  
   # Sidebar layout with input and output definitions ----
   sidebarLayout(
     position = "right",
@@ -36,15 +40,8 @@ ui <- fluidPage(
 
 # Define server logic required to draw a histogram ----
 server <- function(input, output) {
-  
-  # Histogram of the Old Faithful Geyser Data ----
-  # with requested number of bins
-  # This expression that generates a histogram is wrapped in a call
-  # to renderPlot to indicate that:
-  #
   # 1. It is "reactive" and therefore should be automatically
   #    re-executed when inputs (input$bins) change
-  # 2. Its output type is a plot
   output$distPlot <- renderPlot({
     
     x    <- faithful$waiting
@@ -54,6 +51,24 @@ server <- function(input, output) {
          xlab = "Waiting time to next eruption (in mins)",
          main = "Histogram of waiting times")
     
+  })
+  
+  # todo: implement server feature which can deal with .csv survey data format
+  data <- reactive({
+    infile <- input$file1
+  
+    if (is.null(infile)) {
+      return(NULL)
+    }
+    
+    load(infile$datapath)
+    
+    # get the last object that was loaded (excluding the "infile" object)
+    get(ls()[ls() != "infile"])
+  })
+  
+  output$table <- renderTable({
+    data()
   })
   
 }
