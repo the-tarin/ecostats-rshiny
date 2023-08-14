@@ -4,13 +4,12 @@ library(leaflet)
 # Define UI for app that draws a histogram ----
 # fluidpage automatically adjust dimensions of page
 ui <- fluidPage(
-  h1("this is a good test"),
   # App title ----
   titlePanel("Hello Shiny!"),
   
   leafletOutput(outputId = "leafletMap"),
   
-  # only accept RData for now
+  # Data Upload, only accept RData for now
   fileInput("file", "Choose RData File",
             accept = c(".RData")),
   
