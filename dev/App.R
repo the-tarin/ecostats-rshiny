@@ -13,6 +13,8 @@ ui <- fluidPage(
   fileInput("file", "Choose RData File",
             accept = c(".RData")),
   
+  dateRangeInput("dates", h3("Date range")),
+  
   # Sidebar layout with input and output definitions ----
   sidebarLayout(
     position = "right",
@@ -43,7 +45,7 @@ server <- function(input, output) {
   #    re-executed when inputs (input$bins) change
   output$distPlot <- renderPlot({
     
-    x    <- faithful$waiting
+    x    <- data$bearing
     bins <- seq(min(x), max(x), length.out = input$bins + 1)
     
     hist(x, breaks = bins, col = "#75AADB", border = "white",
