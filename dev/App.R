@@ -20,7 +20,7 @@ ui <- fluidPage(
     
     # Main panel for displaying outputs ----
     mainPanel(
-      # plotOutput(outputId = "distPlot")
+      plotOutput(outputId = "distPlot"),
       leafletOutput(outputId = "leafletMap")
     )
   )
@@ -32,8 +32,9 @@ server <- function(input, output) {
   #    re-executed when inputs (input$bins) change
   output$distPlot <- renderPlot({
     
-    x    <- data$bearing
-    bins <- seq(min(x), max(x), length.out = input$bins + 1)
+    x    <- faithful$eruptions
+    # bins <- seq(min(x), max(x), length.out = input$bins + 1)
+    bins <- seq(min(x), max(x), length.out = 10)
     
     hist(x, breaks = bins, col = "#75AADB", border = "white",
          xlab = "Waiting time to next eruption (in mins)",
