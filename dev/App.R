@@ -1,40 +1,27 @@
 library(shiny)
 library(leaflet)
 
-# Define UI for app that draws a histogram ----
-# fluidpage automatically adjust dimensions of page
 ui <- fluidPage(
-  # App title ----
-  titlePanel("Hello Shiny!"),
+  titlePanel("Survey of Orangutan Noise Data"),
   
-  leafletOutput(outputId = "leafletMap"),
-  
-  # Data Upload, only accept RData for now
-  fileInput("file", "Choose RData File",
-            accept = c(".RData")),
-  
-  dateRangeInput("dates", h3("Date range")),
-  
-  # Sidebar layout with input and output definitions ----
   sidebarLayout(
-    position = "right",
-    # Sidebar panel for inputs ----
     sidebarPanel(
-      # Input: Slider for the number of bins ----
-      sliderInput(inputId = "bins",
-                  label = "Number of bins:",
-                  min = 10,
-                  max = 50,
-                  value = 30)
+      fileInput("file", "Choose RData File",
+                accept = c(".RData")),
       
+      dateRangeInput("dates", h3("Date range"))
+      
+      #sliderInput(inputId = "bins",
+      #            label = "Number of bins:",
+      #            min = 10,
+      #            max = 50,
+      #            value = 30)
     ),
     
     # Main panel for displaying outputs ----
     mainPanel(
-      
-      # Output: Histogram ----
-      plotOutput(outputId = "distPlot")
-      
+      # plotOutput(outputId = "distPlot")
+      leafletOutput(outputId = "leafletMap")
     )
   )
 )
@@ -51,7 +38,6 @@ server <- function(input, output) {
     hist(x, breaks = bins, col = "#75AADB", border = "white",
          xlab = "Waiting time to next eruption (in mins)",
          main = "Histogram of waiting times")
-    
   })
   
   # todo: implement server feature which can deal with .csv survey data format
