@@ -1,5 +1,6 @@
 library(tidyverse)
 library(lubridate)
+setwd("Documents/software-ds/ecostats-rshiny/")
 
 # generate random coordinates, bearings and datetime object timestamps
 generate_data <- function(num_samples) {
@@ -35,4 +36,6 @@ generate_data <- function(num_samples) {
 
 
 fake_survey_df <- generate_data(50)
-save(fake_survey_df, file = "data/fake_survey.RData")
+save(fake_survey_df, file = "dev/data/fake_survey.RData")
+write.csv(fake_survey_df, file = "dev/data/fake_survey.csv")
+
