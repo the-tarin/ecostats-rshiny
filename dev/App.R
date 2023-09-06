@@ -6,8 +6,11 @@ ui <- fluidPage(
   
   sidebarLayout(
     sidebarPanel(
-      fileInput("file", "Choose RData File",
-                accept = c(".RData")),
+      fileInput("file1", "Choose CSV File",
+                multiple = TRUE,
+                accept = c("text/csv",
+                           "text/comma-separated-values,text/plain",
+                           ".csv")),
       
       dateRangeInput("dates", h3("Date range"))
       
@@ -29,8 +32,6 @@ ui <- fluidPage(
 
 # Define server logic required to draw a histogram ----
 server <- function(input, output) {
-  
-  # todo: implement server feature which can deal with .csv survey data format
   output$contents <- renderTable({
     
     # input$file1 will be NULL initially. After the user selects
@@ -40,16 +41,12 @@ server <- function(input, output) {
     req(input$file1)
     
     df <- read.csv(input$file1$datapath,
-                   header = input$header,
-                   sep = input$sep,
-                   quote = input$quote)
+                   header = TRUE,
+                   sep = ",",
+                   quote = "")
     
-    if(input$disp == "head") {
-      return(head(df))
-    }
-    else {
-      return(df)
-    }
+    
+    return(df)
     
   })
   
