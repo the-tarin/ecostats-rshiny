@@ -23,7 +23,7 @@ ui <- fluidPage(
     
     # Main panel for displaying outputs ----
     mainPanel(
-      # plotOutput(outputId = "distPlot"),
+      plotOutput(outputId = "distPlot"),
       # leafletOutput(outputId = "leafletMap")
       tableOutput("contents")
     )
@@ -32,7 +32,7 @@ ui <- fluidPage(
 
 # Define server logic required to draw a histogram ----
 server <- function(input, output) {
-  output$contents <- renderTable({
+  data <- reactive({
     
     # input$file1 will be NULL initially. After the user selects
     # and uploads a file, head of that data file by default,
@@ -50,22 +50,19 @@ server <- function(input, output) {
     
   })
   
-  # output$table <- renderTable({
-  #   df <- data()
-  #   return(df)
-  # })
-  
-  # 1. It is "reactive" and therefore should be automatically
-  #    re-executed when inputs (input$bins) change
-  # output$distPlot <- renderPlot({
-  #   x <- data()$bearing
-  #   # bins <- seq(min(x), max(x), length.out = input$bins + 1)
-  #   bins <- seq(min(x), max(x), length.out = 10)
-  #   
-  #   hist(x, breaks = bins, col = "#75AADB", border = "white",
-  #        xlab = "Waiting time to next eruption (in mins)",
-  #        main = "Histogram of waiting times")
-  # })
+  output$contents <- renderTable({
+    data()
+  })
+
+  output$distPlot <- renderPlot({
+    x <- data()
+    # bins <- seq(min(x), max(x), length.out = input$bins + 1)
+    bins <- seq(min(x), max(x), length.out = 10)
+
+    hist(x, breaks = bins, col = "#75AADB", border = "white",
+         xlab = "Waiting time to next eruption (in mins)",
+         main = "Histogram of waiting times")
+  })
 }
 
 # Create Shiny app ----
