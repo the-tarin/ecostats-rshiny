@@ -55,7 +55,7 @@ server <- function(input, output) {
   })
 
   output$distPlot <- renderPlot({
-    x <- data()
+    x <- data()$X.measured_bearing
     # bins <- seq(min(x), max(x), length.out = input$bins + 1)
     bins <- seq(min(x), max(x), length.out = 10)
 
