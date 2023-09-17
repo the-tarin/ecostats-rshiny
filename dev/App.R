@@ -6,7 +6,13 @@ ui <- fluidPage(
   
   sidebarLayout(
     sidebarPanel(
-      fileInput("file1", "Choose CSV File",
+      fileInput("file1", "Upload Mic Coordinate Data in CSV Format",
+                multiple = TRUE,
+                accept = c("text/csv",
+                           "text/comma-separated-values,text/plain",
+                           ".csv")),
+      
+      fileInput("file2", "Upload Recording Data in CSV Format",
                 multiple = TRUE,
                 accept = c("text/csv",
                            "text/comma-separated-values,text/plain",
@@ -32,30 +38,33 @@ ui <- fluidPage(
 
 # Define server logic required to draw a histogram ----
 server <- function(input, output) {
-  data <- reactive({
-    
-    # input$file1 will be NULL initially. After the user selects
-    # and uploads a file, head of that data file by default,
-    # or all rows if selected, will be shown.
-    
+  # input$fileX will be NULL initially. After the user selects
+  # and uploads a file, head of that data file by default,
+  # or all rows if selected, will be shown.
+  data1 <- reactive({
     req(input$file1)
-    
     df <- read.csv(input$file1$datapath,
                    header = TRUE,
                    sep = ",",
                    quote = "")
-    
-    
     return(df)
-    
+  })
+  
+  data2 <- reactive({
+    req(input$file2)
+    df <- read.csv(input$file2$datapath,
+                   header = TRUE,
+                   sep = ",",
+                   quote = "")
+    return(df)
   })
   
   output$contents <- renderTable({
-    data()
+    data1()
   })
 
   output$distPlot <- renderPlot({
-    x <- data()$X.ground_truth_bearing
+    x <- data1()$X.measured_bearing
     # bins <- seq(min(x), max(x), length.out = input$bins + 1)
     bins <- seq(min(x), max(x), length.out = 100)
 
