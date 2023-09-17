@@ -55,9 +55,9 @@ server <- function(input, output) {
   })
 
   output$distPlot <- renderPlot({
-    x <- data()$X.measured_bearing
+    x <- data()$X.ground_truth_bearing
     # bins <- seq(min(x), max(x), length.out = input$bins + 1)
-    bins <- seq(min(x), max(x), length.out = 10)
+    bins <- seq(min(x), max(x), length.out = 100)
 
     hist(x, breaks = bins, col = "#75AADB", border = "white",
          xlab = "Waiting time to next eruption (in mins)",
