@@ -1,5 +1,6 @@
 library(shiny)
 library(leaflet)
+library(htmltools)
 
 ui <- fluidPage(
   titlePanel("Survey of Orangutan Noise Data"),
@@ -20,12 +21,6 @@ ui <- fluidPage(
                            ".csv")),
       
       dateRangeInput("dates", h3("Date range"))
-      
-      #sliderInput(inputId = "bins",
-      #            label = "Number of bins:",
-      #            min = 10,
-      #            max = 50,
-      #            value = 30)
     ),
     
     # Main panel for displaying outputs ----
@@ -82,7 +77,15 @@ server <- function(input, output) {
       addProviderTiles(providers$Esri.WorldImagery,
                        options = providerTileOptions(noWrap = TRUE)
       ) %>%
-      addMarkers(data = mic_df(), lat = ~X.lat., lng = ~X.lon.)
+      # addMarkers(data = mic_df(), lat = ~X.lat., lng = ~X.lon.)
+      addAwesomeMarkers(data = mic_df(), lat = ~X.lat., lng = ~X.lon.,
+        icon = awesomeIcon(
+          icon = 'marker',
+          markerColor = 'blue',
+          iconColor = 'white',
+          angle = 45  # Set the rotation angle based on the bearing
+        )
+      )
   })
 }
 

@@ -1,0 +1,5 @@
+/* styles.css */
+.marker-rotate {
+  transform-origin: center center;
+  transform: rotate(45deg); /* Replace with the bearing value from your data */
+}
