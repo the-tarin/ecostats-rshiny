@@ -54,6 +54,10 @@ server <- function(input, output) {
                    header = TRUE,
                    sep = ",",
                    quote = "")
+    
+    # recorder by measured datetime of gibbon call
+    recording_df <- recording_df[order(recording_df$X.measured_call_datetime), ]
+    
     return(recording_df)
   })
   
@@ -75,7 +79,7 @@ server <- function(input, output) {
   ### map output
   output$mymap <- renderLeaflet({
     leaflet() %>%
-      addProviderTiles(providers$Stamen.TonerLite,
+      addProviderTiles(providers$Esri.WorldImagery,
                        options = providerTileOptions(noWrap = TRUE)
       ) %>%
       addMarkers(data = mic_df(), lat = ~X.lat., lng = ~X.lon.)
