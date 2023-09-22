@@ -4,6 +4,7 @@ library(htmltools)
 
 ui <- fluidPage(
   titlePanel("Survey of Orangutan Noise Data"),
+  # tags$head(tags$link(rel = "stylesheet", type = "text/css", href = "dev/styles.css")),  # Link to custom CSS file
   leafletOutput("mymap"),
   
   sidebarLayout(
@@ -77,14 +78,8 @@ server <- function(input, output) {
       addProviderTiles(providers$Esri.WorldImagery,
                        options = providerTileOptions(noWrap = TRUE)
       ) %>%
-      # addMarkers(data = mic_df(), lat = ~X.lat., lng = ~X.lon.)
-      addAwesomeMarkers(data = mic_df(), lat = ~X.lat., lng = ~X.lon.,
-        icon = awesomeIcon(
-          icon = 'marker',
-          markerColor = 'blue',
-          iconColor = 'white',
-          angle = 45  # Set the rotation angle based on the bearing
-        )
+      addMarkers(data = mic_df(), lat = ~X.lat., lng = ~X.lon.)
+      # addAwesomeMarkers(data = mic_df(), lat = ~X.lat., lng = ~X.lon.)
       )
   })
 }
