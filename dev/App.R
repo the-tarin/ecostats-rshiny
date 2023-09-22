@@ -3,6 +3,7 @@ library(leaflet)
 
 ui <- fluidPage(
   titlePanel("Survey of Orangutan Noise Data"),
+  leafletOutput("mymap"),
   
   sidebarLayout(
     sidebarPanel(
@@ -41,36 +42,48 @@ server <- function(input, output) {
   # input$fileX will be NULL initially. After the user selects
   # and uploads a file, head of that data file by default,
   # or all rows if selected, will be shown.
-  data1 <- reactive({
+  mic_df <- reactive({
     req(input$file1)
-    df <- read.csv(input$file1$datapath,
+    mic_df <- read.csv(input$file1$datapath,
                    header = TRUE,
                    sep = ",",
                    quote = "")
-    return(df)
+    return(mic_df)
   })
   
-  data2 <- reactive({
+  recording_df <- reactive({
     req(input$file2)
-    df <- read.csv(input$file2$datapath,
+    recording_df <- read.csv(input$file2$datapath,
                    header = TRUE,
                    sep = ",",
                    quote = "")
-    return(df)
+    return(recording_df)
   })
   
   output$contents <- renderTable({
-    data1()
+    recording_df()
   })
 
   output$distPlot <- renderPlot({
-    x <- data1()$X.measured_bearing
+    x <- recording_df()$X.measured_bearing
     # bins <- seq(min(x), max(x), length.out = input$bins + 1)
     bins <- seq(min(x), max(x), length.out = 100)
 
     hist(x, breaks = bins, col = "#75AADB", border = "white",
          xlab = "Waiting time to next eruption (in mins)",
          main = "Histogram of waiting times")
+  })
+  
+  points <- eventReactive(input$recalc, {
+    cbind(rnorm(40) * 2 + 13, rnorm(40) + 48)
+  }, ignoreNULL = FALSE)
+  
+  output$mymap <- renderLeaflet({
+    leaflet() %>%
+      addProviderTiles(providers$Stamen.TonerLite,
+                       options = providerTileOptions(noWrap = TRUE)
+      ) %>%
+      addMarkers(data = points())
   })
 }
 
