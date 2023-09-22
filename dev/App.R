@@ -31,7 +31,6 @@ ui <- fluidPage(
     # Main panel for displaying outputs ----
     mainPanel(
       plotOutput(outputId = "distPlot"),
-      # leafletOutput(outputId = "leafletMap")
       tableOutput("contents")
     )
   )
@@ -39,9 +38,7 @@ ui <- fluidPage(
 
 # Define server logic required to draw a histogram ----
 server <- function(input, output) {
-  # input$fileX will be NULL initially. After the user selects
-  # and uploads a file, head of that data file by default,
-  # or all rows if selected, will be shown.
+  ### input dataframes
   mic_df <- reactive({
     req(input$file1)
     mic_df <- read.csv(input$file1$datapath,
@@ -64,6 +61,7 @@ server <- function(input, output) {
     recording_df()
   })
 
+  ### output distribution plots for testing
   output$distPlot <- renderPlot({
     x <- recording_df()$X.measured_bearing
     # bins <- seq(min(x), max(x), length.out = input$bins + 1)
@@ -74,16 +72,13 @@ server <- function(input, output) {
          main = "Histogram of waiting times")
   })
   
-  points <- eventReactive(input$recalc, {
-    cbind(rnorm(40) * 2 + 13, rnorm(40) + 48)
-  }, ignoreNULL = FALSE)
-  
+  ### map output
   output$mymap <- renderLeaflet({
     leaflet() %>%
       addProviderTiles(providers$Stamen.TonerLite,
                        options = providerTileOptions(noWrap = TRUE)
       ) %>%
-      addMarkers(data = points())
+      addMarkers(data = mic_df(), lat = ~X.lat., lng = ~X.lon.)
   })
 }
 
