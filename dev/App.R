@@ -27,7 +27,7 @@ ui <- fluidPage(
                            "text/comma-separated-values,text/plain",
                            ".csv")),
       
-      dateRangeInput("dates", h3("Date range"))
+      dateRangeInput("dateRange", label = "Date range")
     ),
     
     # Main panel for displaying outputs ----
@@ -72,20 +72,25 @@ server <- function(input, output) {
     return(gibbon_df)
   })
   
+  # output recordings dataframe
   output$contents <- renderTable({
     recording_df()
   })
+  
+  # output$contents <- renderTable({
+  #   recording_df() %>% filter(~X.measured_call_datetime. >= input$dateRange[1] & ~X.measured_call_datetime. <= input$dateRange[2])
+  # })
 
   ### output distribution plots for testing
-  output$distPlot <- renderPlot({
-    x <- recording_df()$X.measured_bearing
-    # bins <- seq(min(x), max(x), length.out = input$bins + 1)
-    bins <- seq(min(x), max(x), length.out = 100)
-
-    hist(x, breaks = bins, col = "#75AADB", border = "white",
-         xlab = "Waiting time to next eruption (in mins)",
-         main = "Histogram of waiting times")
-  })
+  # output$distPlot <- renderPlot({
+  #   x <- recording_df()$X.measured_bearing
+  #   # bins <- seq(min(x), max(x), length.out = input$bins + 1)
+  #   bins <- seq(min(x), max(x), length.out = 100)
+  # 
+  #   hist(x, breaks = bins, col = "#75AADB", border = "white",
+  #        xlab = "Waiting time to next eruption (in mins)",
+  #        main = "Histogram of waiting times")
+  # })
   
   ### map output
   output$mymap <- renderLeaflet({
@@ -93,9 +98,8 @@ server <- function(input, output) {
       addProviderTiles(providers$Esri.WorldImagery,
                        options = providerTileOptions(noWrap = TRUE)
       ) %>%
-      addMarkers(data = mic_df(), lat = ~X.lat., lng = ~X.lon., color = "blue") %>%
-      # todo change marker colou
-      addMarkers(data = gibbon_df(), lat = ~X.lat., lng = ~X.lon.)
+      addMarkers(data = mic_df(), lat = ~X.lat., lng = ~X.lon.)
+      # addMarkers(data = gibbon_df(), lat = ~X.lat., lng = ~X.lon.)
   })
 }
 
