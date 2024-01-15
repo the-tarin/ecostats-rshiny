@@ -1,10 +1,10 @@
 library(shiny)
+library(dplyr)
 library(leaflet)
 library(htmltools)
 
 ui <- fluidPage(
   titlePanel("Survey of Orangutan Noise Data"),
-  # tags$head(tags$link(rel = "stylesheet", type = "text/css", href = "dev/styles.css")),  # Link to custom CSS file
   leafletOutput("mymap"),
   
   sidebarLayout(
@@ -27,7 +27,17 @@ ui <- fluidPage(
                            "text/comma-separated-values,text/plain",
                            ".csv")),
       
-      dateRangeInput("dateRange", label = "Date range")
+      dateRangeInput(inputId = "dateRange", label = "Date range"),
+      selectInput(
+        inputId = "selected_mic_ID",
+        label = "Select Mic ID",
+        choices = c(1, 2, 3, 4, 5, 6),
+        selected = NULL,
+        multiple = FALSE,
+        selectize = TRUE,
+        width = NULL,
+        size = NULL
+      )
     ),
     
     # Main panel for displaying outputs ----
@@ -73,14 +83,16 @@ server <- function(input, output) {
   })
   
   # output recordings dataframe
+  # output$contents <- renderTable({
+  #   recording_df()
+  # })
+  
   output$contents <- renderTable({
-    recording_df()
+    recording_df() %>% 
+      filter(!!sym("X.mic_ID.") == input$selected_mic_ID)
+      # %>% filter(~X.measured_call_datetime. >= input$dateRange[1] & ~X.measured_call_datetime. <= input$dateRange[2])
   })
   
-  # output$contents <- renderTable({
-  #   recording_df() %>% filter(~X.measured_call_datetime. >= input$dateRange[1] & ~X.measured_call_datetime. <= input$dateRange[2])
-  # })
-
   ### output distribution plots for testing
   # output$distPlot <- renderPlot({
   #   x <- recording_df()$X.measured_bearing
