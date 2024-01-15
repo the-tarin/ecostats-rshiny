@@ -21,6 +21,12 @@ ui <- fluidPage(
                            "text/comma-separated-values,text/plain",
                            ".csv")),
       
+      fileInput("file3", "Upload Gibbon Group Data (Ground Truth) in CSV Format",
+                multiple = TRUE,
+                accept = c("text/csv",
+                           "text/comma-separated-values,text/plain",
+                           ".csv")),
+      
       dateRangeInput("dates", h3("Date range"))
     ),
     
@@ -57,6 +63,15 @@ server <- function(input, output) {
     return(recording_df)
   })
   
+  gibbon_df <- reactive({
+    req(input$file3)
+    gibbon_df <- read.csv(input$file3$datapath,
+                       header = TRUE,
+                       sep = ",",
+                       quote = "")
+    return(gibbon_df)
+  })
+  
   output$contents <- renderTable({
     recording_df()
   })
@@ -78,9 +93,8 @@ server <- function(input, output) {
       addProviderTiles(providers$Esri.WorldImagery,
                        options = providerTileOptions(noWrap = TRUE)
       ) %>%
-      addMarkers(data = mic_df(), lat = ~X.lat., lng = ~X.lon.)
-      # addAwesomeMarkers(data = mic_df(), lat = ~X.lat., lng = ~X.lon.)
-      )
+      # addMarkers(data = mic_df(), lat = ~X.lat., lng = ~X.lon.)
+      addMarkers(data = gibbon_df(), lat = ~X.x_gibbon_group., lng = ~X.y_gibbon_group.)
   })
 }
 
