@@ -93,8 +93,9 @@ server <- function(input, output) {
       addProviderTiles(providers$Esri.WorldImagery,
                        options = providerTileOptions(noWrap = TRUE)
       ) %>%
-      # addMarkers(data = mic_df(), lat = ~X.lat., lng = ~X.lon.)
-      addMarkers(data = gibbon_df(), lat = ~X.x_gibbon_group., lng = ~X.y_gibbon_group.)
+      addMarkers(data = mic_df(), lat = ~X.lat., lng = ~X.lon., color = "blue") %>%
+      # todo change marker colou
+      addMarkers(data = gibbon_df(), lat = ~X.lat., lng = ~X.lon.)
   })
 }
 
