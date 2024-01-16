@@ -2,14 +2,16 @@ library(shiny)
 library(dplyr)
 library(leaflet)
 library(htmltools)
+library(DT)
 
 min_time_range = as.POSIXct("2023-01-01 04:00:00")
 max_time_range = as.POSIXct("2023-01-01 05:00:00")
 
 ui <- fluidPage(
   titlePanel("Survey of Orangutan Noise Data"),
+  # map #
   leafletOutput("mymap"),
-  
+  ###
   sidebarLayout(
     sidebarPanel(
       # input files #
@@ -32,9 +34,9 @@ ui <- fluidPage(
                            ".csv")),
       ###
       # filters #
-      # dateRangeInput(inputId = "dateRange", label = "Date range"),
+      # dateInput(inputId = "date", label = "Date Selected"), # this needs more work
       sliderInput(
-        inputId = "timeRange", 
+        inputId = "selected_time_range", 
         label = "Time Range",
         min = min_time_range,
         max = max_time_range,
@@ -50,31 +52,31 @@ ui <- fluidPage(
         timeFormat = "%F %T",
         timezone = NULL,
         dragRange = TRUE
-      ),
-      selectInput(
-        inputId = "selected_mic_ID",
-        label = "Filter Mic ID",
-        choices = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16),
-        selected = NULL,
-        multiple = FALSE,
-        selectize = TRUE,
-        width = NULL,
-        size = NULL
       )
+      # selectInput(
+      #   inputId = "selected_mic_ID",
+      #   label = "Filter Mic ID",
+      #   choices = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16),
+      #   selected = NULL,
+      #   multiple = FALSE,
+      #   selectize = TRUE,
+      #   width = NULL,
+      #   size = NULL
+      # )
       ###
     ),
     
-    # Main panel for displaying outputs ----
+    # Main panel for displaying outputs #
     mainPanel(
       plotOutput(outputId = "distPlot"),
-      tableOutput("contents")
+      tableOutput("contents"),
+      DT::dataTableOutput("mytable")
     )
+    ###
   )
 )
 
-# Define server logic required to draw a histogram ----
 server <- function(input, output) {
-  ### input dataframes
   mic_df <- reactive({
     req(input$file1)
     mic_df <- read.csv(input$file1$datapath,
@@ -106,18 +108,6 @@ server <- function(input, output) {
     return(gibbon_df)
   })
   
-  # output recordings dataframe
-  # output$contents <- renderTable({
-  #   recording_df()
-  # })
-  
-  output$contents <- renderTable({
-    recording_df() %>% 
-      # filter(!!sym("X.mic_ID.") == input$selected_mic_ID) %>%
-      filter(X.measured_call_datetime. >= as.POSIXct(input$timeRange[1]) & 
-               X.measured_call_datetime. <= as.POSIXct(input$timeRange[2]))  
-  })
-  
   ### output distribution plots for testing
   # output$distPlot <- renderPlot({
   #   x <- recording_df()$X.measured_bearing
@@ -128,6 +118,13 @@ server <- function(input, output) {
   #        xlab = "Waiting time to next eruption (in mins)",
   #        main = "Histogram of waiting times")
   # })
+  
+  output$mytable = DT::renderDataTable({
+    recording_df() %>%
+      # filter(!!sym("X.mic_ID.") == input$selected_mic_ID) %>% # todo: figure out better interface for selecting by mic ID. Also having issues with default selection.
+      filter(X.measured_call_datetime. >= as.POSIXct(input$selected_time_range[1]) &
+               X.measured_call_datetime. <= as.POSIXct(input$selected_time_range[2]))
+  })
   
   ### map output
   output$mymap <- renderLeaflet({
