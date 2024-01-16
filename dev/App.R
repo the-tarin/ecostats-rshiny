@@ -3,12 +3,16 @@ library(dplyr)
 library(leaflet)
 library(htmltools)
 
+min_time_range = as.POSIXct("2023-01-01 04:00:00")
+max_time_range = as.POSIXct("2023-01-01 05:00:00")
+
 ui <- fluidPage(
   titlePanel("Survey of Orangutan Noise Data"),
   leafletOutput("mymap"),
   
   sidebarLayout(
     sidebarPanel(
+      # input files #
       fileInput("file1", "Upload Mic Coordinate Data in CSV Format",
                 multiple = TRUE,
                 accept = c("text/csv",
@@ -26,18 +30,38 @@ ui <- fluidPage(
                 accept = c("text/csv",
                            "text/comma-separated-values,text/plain",
                            ".csv")),
-      
-      dateRangeInput(inputId = "dateRange", label = "Date range"),
+      ###
+      # filters #
+      # dateRangeInput(inputId = "dateRange", label = "Date range"),
+      sliderInput(
+        inputId = "timeRange", 
+        label = "Time Range",
+        min = min_time_range,
+        max = max_time_range,
+        value = c(min_time_range, max_time_range),
+        step = 1,
+        round = FALSE,
+        ticks = TRUE,
+        animate = FALSE,
+        width = NULL,
+        sep = ",",
+        pre = NULL,
+        post = NULL,
+        timeFormat = "%F %T",
+        timezone = NULL,
+        dragRange = TRUE
+      ),
       selectInput(
         inputId = "selected_mic_ID",
-        label = "Select Mic ID",
-        choices = c(1, 2, 3, 4, 5, 6),
+        label = "Filter Mic ID",
+        choices = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16),
         selected = NULL,
         multiple = FALSE,
         selectize = TRUE,
         width = NULL,
         size = NULL
       )
+      ###
     ),
     
     # Main panel for displaying outputs ----
@@ -89,8 +113,9 @@ server <- function(input, output) {
   
   output$contents <- renderTable({
     recording_df() %>% 
-      filter(!!sym("X.mic_ID.") == input$selected_mic_ID)
-      # %>% filter(~X.measured_call_datetime. >= input$dateRange[1] & ~X.measured_call_datetime. <= input$dateRange[2])
+      # filter(!!sym("X.mic_ID.") == input$selected_mic_ID) %>%
+      filter(X.measured_call_datetime. >= as.POSIXct(input$timeRange[1]) & 
+               X.measured_call_datetime. <= as.POSIXct(input$timeRange[2]))  
   })
   
   ### output distribution plots for testing
