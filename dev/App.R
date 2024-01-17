@@ -4,8 +4,15 @@ library(leaflet)
 library(htmltools)
 library(DT)
 
-min_time_range = as.POSIXct("2023-01-01 04:00:00")
-max_time_range = as.POSIXct("2023-01-01 05:00:00")
+min_time_range <- 0  # 00:00:00 in seconds
+max_time_range <- 24 * 3600 - 1  # 11:59:59 in seconds
+
+# for creating labels for slider todo: fix this so it doesn't cause errors
+seconds_to_hms <- function(seconds) {
+  sprintf("%02d:%02d:%02d", seconds %/% 3600, seconds %/% 60 %% 60, seconds %% 60)
+}
+slider_labels <- seq(min_time_range, max_time_range, by = 60)
+slider_labels <- setNames(seconds_to_hms(slider_labels), slider_labels)
 
 ui <- fluidPage(
   titlePanel("Survey of Orangutan Noise Data"),
@@ -34,25 +41,39 @@ ui <- fluidPage(
                            ".csv")),
       ###
       # filters #
-      # dateInput(inputId = "date", label = "Date Selected"), # this needs more work
+      dateInput(inputId = "selected_date", label = "Date Selected"),
       sliderInput(
-        inputId = "selected_time_range", 
+        inputId = "selected_time_range",
         label = "Time Range",
         min = min_time_range,
         max = max_time_range,
         value = c(min_time_range, max_time_range),
-        step = 1,
+        step = 60,  # Step in seconds (adjust as needed)
         round = FALSE,
         ticks = TRUE,
-        animate = FALSE,
-        width = NULL,
-        sep = ",",
-        pre = NULL,
-        post = NULL,
-        timeFormat = "%F %T",
-        timezone = NULL,
-        dragRange = TRUE
+        animate = FALSE
+        # labels = slider_labels
       )
+
+      # sliderInput(
+      #   inputId = "selected_time_range",
+      #   label = "Time Range",
+      #   min = min_time_range,
+      #   max = max_time_range,
+      #   value = c(min_time_range, max_time_range),
+      #   step = 1,
+      #   round = FALSE,
+      #   ticks = TRUE,
+      #   animate = FALSE,
+      #   width = NULL,
+      #   sep = ",",
+      #   pre = NULL,
+      #   post = NULL,
+      #   timeFormat = "%F %T",
+      #   timezone = NULL,
+      #   dragRange = TRUE
+      # )
+
       # selectInput(
       #   inputId = "selected_mic_ID",
       #   label = "Filter Mic ID",
@@ -69,7 +90,6 @@ ui <- fluidPage(
     # Main panel for displaying outputs #
     mainPanel(
       plotOutput(outputId = "distPlot"),
-      tableOutput("contents"),
       DT::dataTableOutput("mytable")
     )
     ###
@@ -119,11 +139,33 @@ server <- function(input, output) {
   #        main = "Histogram of waiting times")
   # })
   
+  # output$mytable = DT::renderDataTable({
+  #   datatable(
+  #     recording_df() %>%
+  #       filter(X.measured_call_datetime. >= as.POSIXct(input$selected_time_range[1]) &
+  #                X.measured_call_datetime. <= as.POSIXct(input$selected_time_range[2])),
+  #   )
+  # })
+  
   output$mytable = DT::renderDataTable({
+    selected_start_datetime <- format(
+      as.POSIXct(paste(input$selected_date, "00:00:00"), format = "%Y-%m-%d %H:%M:%S") +
+        input$selected_time_range[1],
+      "%Y-%m-%d %H:%M:%S"
+    )
+    selected_end_datetime <- format(
+      as.POSIXct(paste(input$selected_date, "00:00:00"), format = "%Y-%m-%d %H:%M:%S") +
+        input$selected_time_range[2],
+      "%Y-%m-%d %H:%M:%S"
+    )
+    print(selected_start_datetime)
+    print(selected_end_datetime)
+    
     recording_df() %>%
-      # filter(!!sym("X.mic_ID.") == input$selected_mic_ID) %>% # todo: figure out better interface for selecting by mic ID. Also having issues with default selection.
-      filter(X.measured_call_datetime. >= as.POSIXct(input$selected_time_range[1]) &
-               X.measured_call_datetime. <= as.POSIXct(input$selected_time_range[2]))
+      filter(
+        X.measured_call_datetime. >= as.POSIXct(selected_datetime, format = "%Y-%m-%d %H:%M:%S"),
+        X.measured_call_datetime. <= as.POSIXct(selected_end_datetime, format = "%Y-%m-%d %H:%M:%S")
+      )
   })
   
   ### map output
