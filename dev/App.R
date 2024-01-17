@@ -2,17 +2,8 @@ library(shiny)
 library(dplyr)
 library(leaflet)
 library(htmltools)
+library(lubridate)
 library(DT)
-
-min_time_range <- 0  # 00:00:00 in seconds
-max_time_range <- 24 * 3600 - 1  # 11:59:59 in seconds
-
-# for creating labels for slider todo: fix this so it doesn't cause errors
-seconds_to_hms <- function(seconds) {
-  sprintf("%02d:%02d:%02d", seconds %/% 3600, seconds %/% 60 %% 60, seconds %% 60)
-}
-slider_labels <- seq(min_time_range, max_time_range, by = 60)
-slider_labels <- setNames(seconds_to_hms(slider_labels), slider_labels)
 
 ui <- fluidPage(
   titlePanel("Survey of Orangutan Noise Data"),
@@ -41,19 +32,27 @@ ui <- fluidPage(
                            ".csv")),
       ###
       # filters #
-      dateInput(inputId = "selected_date", label = "Date Selected"),
+      dateInput(inputId = "selected_date", label = "Select Date"),
       sliderInput(
-        inputId = "selected_time_range",
-        label = "Time Range",
-        min = min_time_range,
-        max = max_time_range,
-        value = c(min_time_range, max_time_range),
-        step = 60,  # Step in seconds (adjust as needed)
-        round = FALSE,
-        ticks = TRUE,
-        animate = FALSE
-        # labels = slider_labels
+        "selected_time_range",
+        "Select Time Range",
+        min = as.POSIXct("1970-01-01 00:00:00"),
+        max = as.POSIXct("1970-01-01 23:59:59"),
+        value = c(as.POSIXct("1970-01-01 08:00:00"), as.POSIXct("1970-01-01 17:00:00")),
+        step = 60,
+        timeFormat = "%H:%M"
       )
+      # sliderInput(
+      #   inputId = "selected_time_range",
+      #   label = "Selected Time Range",
+      #   min = min_time_range,
+      #   max = max_time_range,
+      #   value = c(min_time_range, max_time_range),
+      #   step = 60,  # Step in seconds (adjust as needed)
+      #   round = FALSE,
+      #   ticks = TRUE,
+      #   animate = FALSE
+      # )
 
       # sliderInput(
       #   inputId = "selected_time_range",
@@ -96,7 +95,18 @@ ui <- fluidPage(
   )
 )
 
-server <- function(input, output) {
+server <- function(input, output, session) {
+  observeEvent(input$selected_date, {
+    updateSliderInput(
+      session,
+      "selected_time_range",
+      min = as.POSIXct(paste(input$selected_date, "00:00:00", tz = "")),
+      max = as.POSIXct(paste(input$selected_date, "23:59:59", tz = "")),
+      value = c(as.POSIXct(paste(input$selected_date, "08:00:00", tz = "")), 
+                as.POSIXct(paste(input$selected_date, "17:00:00", tz = "")))
+    )
+  })
+  
   mic_df <- reactive({
     req(input$file1)
     mic_df <- read.csv(input$file1$datapath,
@@ -148,23 +158,16 @@ server <- function(input, output) {
   # })
   
   output$mytable = DT::renderDataTable({
-    selected_start_datetime <- format(
-      as.POSIXct(paste(input$selected_date, "00:00:00"), format = "%Y-%m-%d %H:%M:%S") +
-        input$selected_time_range[1],
-      "%Y-%m-%d %H:%M:%S"
-    )
-    selected_end_datetime <- format(
-      as.POSIXct(paste(input$selected_date, "00:00:00"), format = "%Y-%m-%d %H:%M:%S") +
-        input$selected_time_range[2],
-      "%Y-%m-%d %H:%M:%S"
-    )
-    print(selected_start_datetime)
-    print(selected_end_datetime)
+    # not the most ideal solution, but it'll do for now
+    selected_time_min = input$selected_time_range[1] + hours(13)
+    selected_time_max = input$selected_time_range[2] + hours(13)
+    print(selected_time_min)
+    print(selected_time_max)
     
     recording_df() %>%
       filter(
-        X.measured_call_datetime. >= as.POSIXct(selected_datetime, format = "%Y-%m-%d %H:%M:%S"),
-        X.measured_call_datetime. <= as.POSIXct(selected_end_datetime, format = "%Y-%m-%d %H:%M:%S")
+        X.measured_call_datetime. >= as.POSIXct(input$selected_time_range[1], format = "%Y-%m-%d %H:%M:%S"),
+        X.measured_call_datetime. <= as.POSIXct(input$selected_time_range[2], format = "%Y-%m-%d %H:%M:%S")
       )
   })
   
