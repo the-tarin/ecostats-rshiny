@@ -8,7 +8,7 @@ library(DT)
 ui <- fluidPage(
   titlePanel("Survey of Orangutan Noise Data"),
   # map #
-  leafletOutput("mymap"),
+  leafletOutput("map"),
   ###
   sidebarLayout(
     sidebarPanel(
@@ -79,14 +79,23 @@ server <- function(input, output, session) {
   })
   
   # todo: complete this, not high priority
-  # observeEvent(input$file2, {
-  #   updateDateInput(
-  #     session,
-  #     "selected_date",
-  #     value = as.POSIXct("2023-01-01", tz = "GMT")
-  #     # value = as.POSIXct(format(recording_df$X.measured_call_datetime[1], "%Y-%m-%d"), tz = "GMT")
-  #   )
-  # })
+  observeEvent(input$file2, {
+    updateDateInput(
+      session,
+      "selected_date",
+      value = as.POSIXct("2023-01-01", tz = "GMT")
+      # value = as.POSIXct(format(recording_df$X.measured_call_datetime[1], "%Y-%m-%d"), tz <- "GMT")
+    )
+  })
+  
+  # add markers when gibbon_df is uploaded
+  observeEvent(input$file1, {
+    leafletProxy("map") %>%
+      clearMarkers() %>%
+      addMarkers(data = mic_df(), lat = ~X.lat., lng = ~X.lon.) %>% 
+      fitBounds(lng1 = min(mic_df()$X.lon.), lat1 = min(mic_df()$X.lat.),
+                lng2 = max(mic_df()$X.lon.), lat2 = max(mic_df()$X.lat.))
+  })
 
   mic_df <- reactive({
     req(input$file1)
@@ -107,7 +116,7 @@ server <- function(input, output, session) {
     # recorder by measured datetime of gibbon call
     recording_df <- recording_df[order(recording_df$X.measured_call_datetime), ]
     
-    print(recording_df$X.measured_call_datetime[1])
+    # print(recording_df$X.measured_call_datetime[1])
     
     return(recording_df)
   })
@@ -121,28 +130,50 @@ server <- function(input, output, session) {
     return(gibbon_df)
   })
   
-  output$recording_table = DT::renderDataTable({
+  output$recording_table <- DT::renderDataTable({
     # not the most ideal solution, but it'll do for now. todo: fix timezone issue
-    selected_time_min = input$selected_time_range[1] + hours(13)
-    selected_time_max = input$selected_time_range[2] + hours(13)
+    selected_time_min <- input$selected_time_range[1] + hours(13)
+    selected_time_max <- input$selected_time_range[2] + hours(13)
     # print(selected_time_min)
     # print(selected_time_max)
     
-    recording_df() %>%
+    recording_df = recording_df() %>%
       filter(
         X.measured_call_datetime. >= as.POSIXct(input$selected_time_range[1], format = "%Y-%m-%d %H:%M:%S"),
         X.measured_call_datetime. <= as.POSIXct(input$selected_time_range[2], format = "%Y-%m-%d %H:%M:%S")
-      ) %>%
-      datatable(editable = list(target = 'row', disable = list(columns = c(0, 2, 3, 4, 5, 6, 7))), rownames = FALSE)
+      )
+      
+    datatable(recording_df, editable = list(target = 'row', disable = list(columns = c(0, 2, 3, 4, 5, 6, 7))), rownames = FALSE)
   })
   
+  # # test #
+  # # create a reactiveValues to store the edited data
+  # # edited_data <- reactiveValues(df = NULL)
+  # 
+  # # hi <- reactive({
+  # #   input$recording_table_cell_edit
+  # # })
+  # 
+  # # observer to update edited_data when the table is edited
+  # observeEvent(input$recording_table_cell_edit, {
+  #   # info <- input$recording_table_cell_edit
+  #   # str(info)
+  #   
+  #   print("hi")
+  #   
+  #   # # Check if the data table is not empty and if a cell was edited
+  #   # if (!is.null(info) && !is.null(info$value)) {
+  #   #   edited_data$df <- editData(edited_data$df, info)
+  #   # }
+  # })
+  # ###
+  
   ### map output
-  output$mymap <- renderLeaflet({
+  output$map <- renderLeaflet({
     leaflet() %>%
       addProviderTiles(providers$Esri.WorldImagery,
                        options = providerTileOptions(noWrap = TRUE)
-      ) %>%
-      addMarkers(data = mic_df(), lat = ~X.lat., lng = ~X.lon.)
+      )
       # addMarkers(data = gibbon_df(), lat = ~X.lat., lng = ~X.lon.)
   })
 }
