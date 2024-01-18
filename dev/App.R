@@ -78,7 +78,7 @@ server <- function(input, output, session) {
     )
   })
   
-  todo: complete this, not high priority
+  # todo: complete this, not high priority
   # observeEvent(input$file2, {
   #   updateDateInput(
   #     session,
@@ -133,7 +133,7 @@ server <- function(input, output, session) {
         X.measured_call_datetime. >= as.POSIXct(input$selected_time_range[1], format = "%Y-%m-%d %H:%M:%S"),
         X.measured_call_datetime. <= as.POSIXct(input$selected_time_range[2], format = "%Y-%m-%d %H:%M:%S")
       ) %>%
-      datatable(editable = list(target = 'row', disable = list(columns = c(0, 2, 3, 4, 5, 6, 7))))
+      datatable(editable = list(target = 'row', disable = list(columns = c(0, 2, 3, 4, 5, 6, 7))), rownames = FALSE)
   })
   
   ### map output
