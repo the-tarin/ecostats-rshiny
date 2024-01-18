@@ -33,6 +33,7 @@ ui <- fluidPage(
       ###
       # filters #
       dateInput(inputId = "selected_date", label = "Select Date"),
+      
       sliderInput(
         "selected_time_range",
         "Select Time Range",
@@ -42,37 +43,7 @@ ui <- fluidPage(
         step = 60,
         timeFormat = "%H:%M"
       )
-      # sliderInput(
-      #   inputId = "selected_time_range",
-      #   label = "Selected Time Range",
-      #   min = min_time_range,
-      #   max = max_time_range,
-      #   value = c(min_time_range, max_time_range),
-      #   step = 60,  # Step in seconds (adjust as needed)
-      #   round = FALSE,
-      #   ticks = TRUE,
-      #   animate = FALSE
-      # )
-
-      # sliderInput(
-      #   inputId = "selected_time_range",
-      #   label = "Time Range",
-      #   min = min_time_range,
-      #   max = max_time_range,
-      #   value = c(min_time_range, max_time_range),
-      #   step = 1,
-      #   round = FALSE,
-      #   ticks = TRUE,
-      #   animate = FALSE,
-      #   width = NULL,
-      #   sep = ",",
-      #   pre = NULL,
-      #   post = NULL,
-      #   timeFormat = "%F %T",
-      #   timezone = NULL,
-      #   dragRange = TRUE
-      # )
-
+      
       # selectInput(
       #   inputId = "selected_mic_ID",
       #   label = "Filter Mic ID",
@@ -89,7 +60,7 @@ ui <- fluidPage(
     # Main panel for displaying outputs #
     mainPanel(
       plotOutput(outputId = "distPlot"),
-      DT::dataTableOutput("mytable")
+      DT::dataTableOutput("recording_table")
     )
     ###
   )
@@ -100,13 +71,23 @@ server <- function(input, output, session) {
     updateSliderInput(
       session,
       "selected_time_range",
-      min = as.POSIXct(paste(input$selected_date, "00:00:00", tz = "")),
-      max = as.POSIXct(paste(input$selected_date, "23:59:59", tz = "")),
-      value = c(as.POSIXct(paste(input$selected_date, "08:00:00", tz = "")), 
-                as.POSIXct(paste(input$selected_date, "17:00:00", tz = "")))
+      min = as.POSIXct(paste(input$selected_date, "00:00:00", tz = "GMT")),
+      max = as.POSIXct(paste(input$selected_date, "23:59:59", tz = "GMT")),
+      value = c(as.POSIXct(paste(input$selected_date, "08:00:00", tz = "GMT")), 
+                as.POSIXct(paste(input$selected_date, "17:00:00", tz = "GMT")))
     )
   })
   
+  todo: complete this, not high priority
+  # observeEvent(input$file2, {
+  #   updateDateInput(
+  #     session,
+  #     "selected_date",
+  #     value = as.POSIXct("2023-01-01", tz = "GMT")
+  #     # value = as.POSIXct(format(recording_df$X.measured_call_datetime[1], "%Y-%m-%d"), tz = "GMT")
+  #   )
+  # })
+
   mic_df <- reactive({
     req(input$file1)
     mic_df <- read.csv(input$file1$datapath,
@@ -126,6 +107,8 @@ server <- function(input, output, session) {
     # recorder by measured datetime of gibbon call
     recording_df <- recording_df[order(recording_df$X.measured_call_datetime), ]
     
+    print(recording_df$X.measured_call_datetime[1])
+    
     return(recording_df)
   })
   
@@ -138,37 +121,19 @@ server <- function(input, output, session) {
     return(gibbon_df)
   })
   
-  ### output distribution plots for testing
-  # output$distPlot <- renderPlot({
-  #   x <- recording_df()$X.measured_bearing
-  #   # bins <- seq(min(x), max(x), length.out = input$bins + 1)
-  #   bins <- seq(min(x), max(x), length.out = 100)
-  # 
-  #   hist(x, breaks = bins, col = "#75AADB", border = "white",
-  #        xlab = "Waiting time to next eruption (in mins)",
-  #        main = "Histogram of waiting times")
-  # })
-  
-  # output$mytable = DT::renderDataTable({
-  #   datatable(
-  #     recording_df() %>%
-  #       filter(X.measured_call_datetime. >= as.POSIXct(input$selected_time_range[1]) &
-  #                X.measured_call_datetime. <= as.POSIXct(input$selected_time_range[2])),
-  #   )
-  # })
-  
-  output$mytable = DT::renderDataTable({
-    # not the most ideal solution, but it'll do for now
+  output$recording_table = DT::renderDataTable({
+    # not the most ideal solution, but it'll do for now. todo: fix timezone issue
     selected_time_min = input$selected_time_range[1] + hours(13)
     selected_time_max = input$selected_time_range[2] + hours(13)
-    print(selected_time_min)
-    print(selected_time_max)
+    # print(selected_time_min)
+    # print(selected_time_max)
     
     recording_df() %>%
       filter(
         X.measured_call_datetime. >= as.POSIXct(input$selected_time_range[1], format = "%Y-%m-%d %H:%M:%S"),
         X.measured_call_datetime. <= as.POSIXct(input$selected_time_range[2], format = "%Y-%m-%d %H:%M:%S")
-      )
+      ) %>%
+      datatable(editable = list(target = 'row', disable = list(columns = c(0, 2, 3, 4, 5, 6, 7))))
   })
   
   ### map output
