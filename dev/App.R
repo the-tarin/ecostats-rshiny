@@ -146,6 +146,12 @@ server <- function(input, output, session) {
     datatable(recording_df, editable = list(target = 'row', disable = list(columns = c(0, 2, 3, 4, 5, 6, 7))), rownames = FALSE)
   })
   
+  ### which rows are selected and change mic markers on the map accordingly
+  observeEvent(input$recording_table_rows_selected, {
+    s = input$recording_table_rows_selected
+    print(s)
+  })
+  
   # # test #
   # # create a reactiveValues to store the edited data
   # # edited_data <- reactiveValues(df = NULL)
@@ -174,7 +180,7 @@ server <- function(input, output, session) {
       addProviderTiles(providers$Esri.WorldImagery,
                        options = providerTileOptions(noWrap = TRUE)
       )
-      # addMarkers(data = gibbon_df(), lat = ~X.lat., lng = ~X.lon.)
+      # todo: fit to page
   })
 }
 
