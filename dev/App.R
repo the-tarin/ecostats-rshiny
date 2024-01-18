@@ -1,8 +1,12 @@
 library(shiny)
-library(dplyr)
+
 library(leaflet)
-library(htmltools)
+library(leaflet.extras)
+library(leaflet.extras2)
+
+library(dplyr)
 library(lubridate)
+
 library(DT)
 
 ui <- fluidPage(
@@ -67,6 +71,7 @@ ui <- fluidPage(
 )
 
 server <- function(input, output, session) {
+  ### change silderInput date based on select date output
   observeEvent(input$selected_date, {
     updateSliderInput(
       session,
@@ -77,8 +82,10 @@ server <- function(input, output, session) {
                 as.POSIXct(paste(input$selected_date, "17:00:00", tz = "GMT")))
     )
   })
+  ###
   
-  # todo: complete this, not high priority
+  ### update select date input to earliest date in the recording data
+  # todo: complete this to automatically extract the date. Not high priority
   observeEvent(input$file2, {
     updateDateInput(
       session,
@@ -88,46 +95,29 @@ server <- function(input, output, session) {
     )
   })
   
-  # add markers when gibbon_df is uploaded
+  # add mic markers when mic_df is uploaded
   observeEvent(input$file1, {
     leafletProxy("map") %>%
       clearMarkers() %>%
-      addMarkers(data = mic_df(), lat = ~X.lat., lng = ~X.lon.) %>% 
+      addCircleMarkers(
+        data = mic_df(),
+        lat = ~X.lat.,
+        lng = ~X.lon.,
+        radius = 6,
+        color = "red",
+        stroke = FALSE, fillOpacity = 0.5
+      ) %>%
+      arrowMarkers(
+        arrows = list(
+          list(
+            lng1 = -71.057, lat1 = 42.36,
+            lng2 = -71.056, lat2 = 42.361,
+            weight = 2, color = "red", size = 10
+          )
+        )
+      ) %>%
       fitBounds(lng1 = min(mic_df()$X.lon.), lat1 = min(mic_df()$X.lat.),
                 lng2 = max(mic_df()$X.lon.), lat2 = max(mic_df()$X.lat.))
-  })
-
-  mic_df <- reactive({
-    req(input$file1)
-    mic_df <- read.csv(input$file1$datapath,
-                   header = TRUE,
-                   sep = ",",
-                   quote = "")
-    return(mic_df)
-  })
-  
-  recording_df <- reactive({
-    req(input$file2)
-    recording_df <- read.csv(input$file2$datapath,
-                   header = TRUE,
-                   sep = ",",
-                   quote = "")
-    
-    # recorder by measured datetime of gibbon call
-    recording_df <- recording_df[order(recording_df$X.measured_call_datetime), ]
-    
-    # print(recording_df$X.measured_call_datetime[1])
-    
-    return(recording_df)
-  })
-  
-  gibbon_df <- reactive({
-    req(input$file3)
-    gibbon_df <- read.csv(input$file3$datapath,
-                       header = TRUE,
-                       sep = ",",
-                       quote = "")
-    return(gibbon_df)
   })
   
   output$recording_table <- DT::renderDataTable({
@@ -152,6 +142,11 @@ server <- function(input, output, session) {
     selected_rows = input$recording_table_rows_selected
     selected_mics = recording_df()$X.mic_ID.[selected_rows]
     print(selected_mics)
+    
+    selected_bearings = recording_df()$X.measured_bearing.[selected_rows]
+    print(selected_bearings)
+    
+    
   })
   
   # # test #
@@ -176,7 +171,42 @@ server <- function(input, output, session) {
   # })
   # ###
   
-  ### map output
+  ### file uploads
+  mic_df <- reactive({
+    req(input$file1)
+    mic_df <- read.csv(input$file1$datapath,
+                       header = TRUE,
+                       sep = ",",
+                       quote = "")
+    return(mic_df)
+  })
+  
+  recording_df <- reactive({
+    req(input$file2)
+    recording_df <- read.csv(input$file2$datapath,
+                             header = TRUE,
+                             sep = ",",
+                             quote = "")
+    
+    # recorder by measured datetime of gibbon call
+    recording_df <- recording_df[order(recording_df$X.measured_call_datetime), ]
+    
+    # print(recording_df$X.measured_call_datetime[1])
+    
+    return(recording_df)
+  })
+  
+  gibbon_df <- reactive({
+    req(input$file3)
+    gibbon_df <- read.csv(input$file3$datapath,
+                          header = TRUE,
+                          sep = ",",
+                          quote = "")
+    return(gibbon_df)
+  })
+  ###
+  
+  ### map
   output$map <- renderLeaflet({
     leaflet() %>%
       addProviderTiles(providers$Esri.WorldImagery,
@@ -184,6 +214,7 @@ server <- function(input, output, session) {
       )
       # todo: fit to page
   })
+  ###
 }
 
 # Create Shiny app ----
