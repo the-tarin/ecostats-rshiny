@@ -146,10 +146,12 @@ server <- function(input, output, session) {
     datatable(recording_df, editable = list(target = 'row', disable = list(columns = c(0, 2, 3, 4, 5, 6, 7))), rownames = FALSE)
   })
   
-  ### which rows are selected and change mic markers on the map accordingly
+  ### selected mic from datatable
+  # todo: need to select mic ID from filtered datatable
   observeEvent(input$recording_table_rows_selected, {
-    s = input$recording_table_rows_selected
-    print(s)
+    selected_rows = input$recording_table_rows_selected
+    selected_mics = recording_df()$X.mic_ID.[selected_rows]
+    print(selected_mics)
   })
   
   # # test #
