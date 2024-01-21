@@ -9,6 +9,31 @@ library(lubridate)
 
 library(DT)
 
+# calculate coordinates from an arc
+calculate_arrow_head_coordinates <- function(lat, lon, bearing, radius) {
+  # Radius of the Earth in meters
+  earth_radius <- 6371000  # approximate value for Earth
+  
+  # Convert bearing from radians to degrees
+  bearing_deg <- bearing * 180 / pi
+  
+  # Calculate new latitude and longitude
+  lat_rad <- lat * pi / 180
+  lon_rad <- lon * pi / 180
+  
+  new_lat_rad <- asin(sin(lat_rad) * cos(radius / earth_radius) +
+                        cos(lat_rad) * sin(radius / earth_radius) * cos(bearing))
+  
+  new_lon_rad <- lon_rad + atan2(sin(bearing) * sin(radius / earth_radius) * cos(lat_rad),
+                                 cos(radius / earth_radius) - sin(lat_rad) * sin(new_lat_rad))
+  
+  # Convert new latitude and longitude to degrees
+  new_lat <- new_lat_rad * 180 / pi
+  new_lon <- new_lon_rad * 180 / pi
+  
+  return(c(new_lat, new_lon))
+}
+
 ui <- fluidPage(
   titlePanel("Survey of Orangutan Noise Data"),
   ### map
@@ -168,10 +193,18 @@ server <- function(input, output, session) {
     selected_rows = input$recording_table_rows_selected
     selected_mics = recording_df()$X.mic_ID.[selected_rows]
     print(selected_mics)
+    
     selected_mic_lat = mic_df()$X.lat.[selected_mics]
     selected_mic_lon = mic_df()$X.lon.[selected_mics]
-
+    selected_mic_coordinates = c(selected_mic_lat, selected_mic_lon)
     selected_bearings = recording_df()$X.measured_bearing.[selected_rows]
+    
+    # calculate new arrowhead coordinates from mic coordinates and measured detection bearing
+    radius = 1000 # meters
+    arrow_head_coordinates = calculate_arrow_head_coordinates(selected_mic_lat, selected_mic_lon, selected_bearings, radius)
+    arrow_coordinates = rbind(selected_mic_coordinates, arrow_head_coordinates)
+    
+    print(arrow_coordinates)
   })
   
   # test #
