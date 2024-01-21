@@ -121,31 +121,49 @@ server <- function(input, output, session) {
   })
   ###
   
+  ### update
+  # recording_df <- reactiveVal(data.frame())
+  # observeEvent(input$fileRecordings, {
+  #   recording_df(recording_df())
+  # })
+  
   ### main recordings datatable
   output$recording_table <- DT::renderDataTable({
-    # not the most ideal solution, but it'll do for now. todo: fix timezone issue
-    selected_time_min <- input$selected_time_range[1] + hours(13)
-    selected_time_max <- input$selected_time_range[2] + hours(13)
-    # print(selected_time_min)
-    # print(selected_time_max)
-    
-    recording_df = recording_df() %>%
+    recording_df_filtered = recording_df() %>%
       filter(
         X.measured_call_datetime. >= as.POSIXct(input$selected_time_range[1], format = "%Y-%m-%d %H:%M:%S"),
         X.measured_call_datetime. <= as.POSIXct(input$selected_time_range[2], format = "%Y-%m-%d %H:%M:%S")
       )
+    
+    # # Apply the edits to the filtered data
+    # if (!is.null(edited_data$df)) {
+    #   print("hello1")
+    #   recording_df_filtered <- merge(
+    #     recording_df_filtered,
+    #     edited_data$df,
+    #     by = "recording_table_row_id", # Add a unique identifier for each row
+    #     all.x = TRUE
+    #   )
+    #   print("hello2")
+    # }
       
     # datatable(recording_df, editable = list(target = 'row', disable = list(columns = c(0, 2, 3, 4, 5, 6, 7))), rownames = FALSE)
-    datatable(recording_df, editable = list(target = 'cell', disable = list(columns = c(0, 2, 3, 4, 5, 6, 7))), rownames = FALSE)
+    datatable(recording_df_filtered, editable = list(target = 'cell', disable = list(columns = c(0, 2, 3, 4, 5, 6, 7))), rownames = FALSE)
   })
   ###
   
   ### selected mic from datatable
   # todo: need to select mic ID from filtered datatable
   
+  edited_data <- reactiveValues(df = NULL)
+  
   proxy_recording_table = dataTableProxy('recording_table')
+  
   observeEvent(input$recording_table_cell_edit, {
     print("hi")
+    print(input$recording_table_cell_edit)
+    browser()
+    # edited_data$df <- editData(edited_data$df, input$recording_table_cell_edit, 'recording_table')
     # info = input$recording_table_cell_edit
     # str(info)  # check what info looks like (a data frame of 3 columns)
     # recording_df <<- editData(recording_df, info)
