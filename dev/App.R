@@ -10,7 +10,7 @@ library(lubridate)
 library(DT)
 
 # calculate coordinates from an arc
-calculate_arrow_head_coordinates <- function(lat, lon, bearing, radius) {
+calculate_arrow_head_coordinates <- function(lat, lng, bearing, radius) {
   # Radius of the Earth in meters
   earth_radius <- 6371000  # approximate value for Earth
   
@@ -19,19 +19,19 @@ calculate_arrow_head_coordinates <- function(lat, lon, bearing, radius) {
   
   # Calculate new latitude and longitude
   lat_rad <- lat * pi / 180
-  lon_rad <- lon * pi / 180
+  lng_rad <- lng * pi / 180
   
   new_lat_rad <- asin(sin(lat_rad) * cos(radius / earth_radius) +
                         cos(lat_rad) * sin(radius / earth_radius) * cos(bearing))
   
-  new_lon_rad <- lon_rad + atan2(sin(bearing) * sin(radius / earth_radius) * cos(lat_rad),
+  new_lng_rad <- lng_rad + atan2(sin(bearing) * sin(radius / earth_radius) * cos(lat_rad),
                                  cos(radius / earth_radius) - sin(lat_rad) * sin(new_lat_rad))
   
   # Convert new latitude and longitude to degrees
   new_lat <- new_lat_rad * 180 / pi
-  new_lon <- new_lon_rad * 180 / pi
+  new_lng <- new_lng_rad * 180 / pi
   
-  return(c(new_lat, new_lon))
+  return(c(new_lat, new_lng))
 }
 
 ui <- fluidPage(
@@ -128,14 +128,14 @@ server <- function(input, output, session) {
       addCircleMarkers(
         data = mic_df(),
         lat = ~X.lat.,
-        lng = ~X.lon.,
+        lng = ~X.lng.,
         radius = 6,
         color = "red",
         stroke = FALSE, fillOpacity = 0.5
       ) %>%
       addArrowhead(data = matrix(c(-62.1, 13.2, -62.8, 13.6), ncol = 2)) %>%
-      fitBounds(lng1 = min(mic_df()$X.lon.), lat1 = min(mic_df()$X.lat.),
-                lng2 = max(mic_df()$X.lon.), lat2 = max(mic_df()$X.lat.))
+      fitBounds(lng1 = min(mic_df()$X.lng.), lat1 = min(mic_df()$X.lat.),
+                lng2 = max(mic_df()$X.lng.), lat2 = max(mic_df()$X.lat.))
   })
   ###
   
@@ -200,14 +200,14 @@ server <- function(input, output, session) {
     }
     
     selected_mic_lat = mic_df()$X.lat.[selected_mics]
-    selected_mic_lon = mic_df()$X.lon.[selected_mics]
-    selected_mic_coordinates = cbind(selected_mic_lat, selected_mic_lon)
+    selected_mic_lng = mic_df()$X.lng.[selected_mics]
+    selected_mic_coordinates = cbind(selected_mic_lat, selected_mic_lng)
     # print(selected_mic_coordinates)
     selected_bearings = recording_df()$X.measured_bearing.[selected_rows]
     
     # calculate new arrowhead coordinates from mic coordinates and measured detection bearing
     radius = 1000 # meters
-    arrow_head_coordinates = calculate_arrow_head_coordinates(selected_mic_lat, selected_mic_lon, selected_bearings, radius)
+    arrow_head_coordinates = calculate_arrow_head_coordinates(selected_mic_lat, selected_mic_lng, selected_bearings, radius)
     arrow_coordinates = rbind(selected_mic_coordinates, arrow_head_coordinates)
     
     print(arrow_coordinates)
