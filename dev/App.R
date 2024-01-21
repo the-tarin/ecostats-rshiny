@@ -124,6 +124,7 @@ server <- function(input, output, session) {
   observeEvent(input$fileMic, {
     leafletProxy("map") %>%
       clearMarkers() %>%
+      removeArrowhead(layerId = NULL) %>%
       addCircleMarkers(
         data = mic_df(),
         lat = ~X.lat.,
@@ -188,15 +189,20 @@ server <- function(input, output, session) {
     # # the above steps can be merged into a single editData() call; see examples below
   })
   
-  
   observeEvent(input$recording_table_rows_selected, {
     selected_rows = input$recording_table_rows_selected
     selected_mics = recording_df()$X.mic_ID.[selected_rows]
     print(selected_mics)
     
+    # add each 2x2 block of 
+    for (i in 1:length(selected_mics)) {
+      
+    }
+    
     selected_mic_lat = mic_df()$X.lat.[selected_mics]
     selected_mic_lon = mic_df()$X.lon.[selected_mics]
-    selected_mic_coordinates = c(selected_mic_lat, selected_mic_lon)
+    selected_mic_coordinates = cbind(selected_mic_lat, selected_mic_lon)
+    # print(selected_mic_coordinates)
     selected_bearings = recording_df()$X.measured_bearing.[selected_rows]
     
     # calculate new arrowhead coordinates from mic coordinates and measured detection bearing
