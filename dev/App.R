@@ -107,15 +107,7 @@ server <- function(input, output, session) {
         color = "red",
         stroke = FALSE, fillOpacity = 0.5
       ) %>%
-      arrowMarkers(
-        arrows = list(
-          list(
-            lng1 = -71.057, lat1 = 42.36,
-            lng2 = -71.056, lat2 = 42.361,
-            weight = 2, color = "red", size = 10
-          )
-        )
-      ) %>%
+      addArrowhead(data = matrix(c(-62.1, 13.2, -62.8, 13.6), ncol = 2)) %>%
       fitBounds(lng1 = min(mic_df()$X.lon.), lat1 = min(mic_df()$X.lat.),
                 lng2 = max(mic_df()$X.lon.), lat2 = max(mic_df()$X.lat.))
   })
@@ -162,7 +154,7 @@ server <- function(input, output, session) {
   observeEvent(input$recording_table_cell_edit, {
     print("hi")
     print(input$recording_table_cell_edit)
-    browser()
+    # browser()
     # edited_data$df <- editData(edited_data$df, input$recording_table_cell_edit, 'recording_table')
     # info = input$recording_table_cell_edit
     # str(info)  # check what info looks like (a data frame of 3 columns)
@@ -172,14 +164,15 @@ server <- function(input, output, session) {
   })
   
   
-  # observeEvent(input$recording_table_rows_selected, {
-  #   selected_rows = input$recording_table_rows_selected
-  #   selected_mics = recording_df()$X.mic_ID.[selected_rows]
-  #   print(selected_mics)
-  #   
-  #   selected_bearings = recording_df()$X.measured_bearing.[selected_rows]
-  #   print(selected_bearings)
-  # })
+  observeEvent(input$recording_table_rows_selected, {
+    selected_rows = input$recording_table_rows_selected
+    selected_mics = recording_df()$X.mic_ID.[selected_rows]
+    print(selected_mics)
+    selected_mic_lat = mic_df()$X.lat.[selected_mics]
+    selected_mic_lon = mic_df()$X.lon.[selected_mics]
+
+    selected_bearings = recording_df()$X.measured_bearing.[selected_rows]
+  })
   
   # test #
   # create a reactiveValues to store the edited data
