@@ -133,7 +133,7 @@ server <- function(input, output, session) {
         color = "red",
         stroke = FALSE, fillOpacity = 0.5
       ) %>%
-      addArrowhead(data = matrix(c(-62.1, 13.2, -62.8, 13.6), ncol = 2)) %>%
+      addArrowhead(data = matrix(c(0, 14.255, 0, 106.659), ncol = 2)) %>%
       fitBounds(lng1 = min(mic_df()$X.lng.), lat1 = min(mic_df()$X.lat.),
                 lng2 = max(mic_df()$X.lng.), lat2 = max(mic_df()$X.lat.))
   })
@@ -189,28 +189,38 @@ server <- function(input, output, session) {
     # # the above steps can be merged into a single editData() call; see examples below
   })
   
+  arrow_data <- reactiveValues(coordinates = matrix(nrow = 0, ncol = 2))
+  
   observeEvent(input$recording_table_rows_selected, {
     selected_rows = input$recording_table_rows_selected
     selected_mics = recording_df()$X.mic_ID.[selected_rows]
     print(selected_mics)
     
-    # add each 2x2 block of 
+    radius = 1000000 # meters. todo: calculate the optimum radius given mic coordinates
+
+    arrow_coordinates_cum <- matrix(nrow = 0, ncol = 2)
+    
     for (i in 1:length(selected_mics)) {
+      selected_mic_lat <- mic_df()$X.lat.[selected_mics[i]]
+      selected_mic_lng <- mic_df()$X.lng.[selected_mics[i]]
       
+      selected_mic_coordinates <- c(selected_mic_lat, selected_mic_lng)
+      
+      selected_bearings <- recording_df()$X.measured_bearing.[selected_rows[i]]
+      
+      # calculate new arrowhead coordinates from mic coordinates and measured detection bearing
+      arrow_head_coordinates <- calculate_arrow_head_coordinates(selected_mic_lat, selected_mic_lng, selected_bearings, radius)
+      arrow_coordinates <- rbind(selected_mic_coordinates, arrow_head_coordinates)
+      
+      arrow_coordinates_cum <- rbind(arrow_coordinates_cum, arrow_coordinates)
     }
-    
-    selected_mic_lat = mic_df()$X.lat.[selected_mics]
-    selected_mic_lng = mic_df()$X.lng.[selected_mics]
-    selected_mic_coordinates = cbind(selected_mic_lat, selected_mic_lng)
-    # print(selected_mic_coordinates)
-    selected_bearings = recording_df()$X.measured_bearing.[selected_rows]
-    
-    # calculate new arrowhead coordinates from mic coordinates and measured detection bearing
-    radius = 1000 # meters
-    arrow_head_coordinates = calculate_arrow_head_coordinates(selected_mic_lat, selected_mic_lng, selected_bearings, radius)
-    arrow_coordinates = rbind(selected_mic_coordinates, arrow_head_coordinates)
-    
-    print(arrow_coordinates)
+    rownames(arrow_coordinates_cum) = NULL
+    arrow_data$coordinates <- arrow_coordinates_cum
+    print(arrow_coordinates_cum)
+  })
+  
+  observeEvent(arrow_data$coordinates, {
+    print("hi")
   })
   
   # test #
