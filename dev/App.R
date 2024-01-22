@@ -31,7 +31,7 @@ calculate_arrow_head_coordinates <- function(lat, lng, bearing, radius) {
   new_lat <- new_lat_rad * 180 / pi
   new_lng <- new_lng_rad * 180 / pi
   
-  return(c(new_lat, new_lng))
+  return(c(new_lng, new_lat))
 }
 
 ui <- fluidPage(
@@ -122,6 +122,8 @@ server <- function(input, output, session) {
   
   ### add mic markers when mic_df is uploaded
   observeEvent(input$fileMic, {
+    test_points = matrix(c(106.6407, 106.6480, 106.6593, 106.6517, 14.25521, 14.26078, 14.25521, 14.26039), ncol = 2)
+    colnames(test_points) = c("lng", "lat")
     leafletProxy("map") %>%
       clearMarkers() %>%
       removeArrowhead(layerId = NULL) %>%
@@ -133,7 +135,7 @@ server <- function(input, output, session) {
         color = "red",
         stroke = FALSE, fillOpacity = 0.5
       ) %>%
-      addArrowhead(data = matrix(c(0, 14.255, 0, 106.659), ncol = 2)) %>%
+      addArrowhead(data = test_points, color = "red") %>%
       fitBounds(lng1 = min(mic_df()$X.lng.), lat1 = min(mic_df()$X.lat.),
                 lng2 = max(mic_df()$X.lng.), lat2 = max(mic_df()$X.lat.))
   })
@@ -196,7 +198,7 @@ server <- function(input, output, session) {
     selected_mics = recording_df()$X.mic_ID.[selected_rows]
     print(selected_mics)
     
-    radius = 1000000 # meters. todo: calculate the optimum radius given mic coordinates
+    radius = 1000 # meters. todo: calculate the optimum radius given mic coordinates
 
     arrow_coordinates_cum <- matrix(nrow = 0, ncol = 2)
     
@@ -204,7 +206,7 @@ server <- function(input, output, session) {
       selected_mic_lat <- mic_df()$X.lat.[selected_mics[i]]
       selected_mic_lng <- mic_df()$X.lng.[selected_mics[i]]
       
-      selected_mic_coordinates <- c(selected_mic_lat, selected_mic_lng)
+      selected_mic_coordinates <- c(selected_mic_lng, selected_mic_lat)
       
       selected_bearings <- recording_df()$X.measured_bearing.[selected_rows[i]]
       
@@ -215,6 +217,7 @@ server <- function(input, output, session) {
       arrow_coordinates_cum <- rbind(arrow_coordinates_cum, arrow_coordinates)
     }
     rownames(arrow_coordinates_cum) = NULL
+    colnames(arrow_coordinates_cum) = c("lng", "lat")
     arrow_data$coordinates <- arrow_coordinates_cum
     print(arrow_coordinates_cum)
   })
