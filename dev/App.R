@@ -1,12 +1,16 @@
 library(shiny)
 
+# maps
 library(leaflet)
 library(leaflet.extras)
 library(leaflet.extras2)
+library(sp)
 
+# dates and data manipulation
 library(dplyr)
 library(lubridate)
 
+# datatables
 library(DT)
 
 # calculate coordinates from an arc
@@ -122,8 +126,60 @@ server <- function(input, output, session) {
   
   ### add mic markers when mic_df is uploaded
   observeEvent(input$fileMic, {
-    test_points = matrix(c(106.6407, 106.6480, 106.6593, 106.6517, 14.25521, 14.26078, 14.25521, 14.26039), ncol = 2)
-    colnames(test_points) = c("lng", "lat")
+    arrow1 <- matrix(c(106.6407, 106.6480, 14.25521, 14.26078), 2)
+
+    coordinates_matrix <- matrix(c(
+      -78.5, 17.6,
+      -78.8, 17.6,
+      -79.0, 17.5,
+      -79.2, 17.5,
+      -79.4, 17.5,
+      -79.6, 17.4,
+      -79.6, 16.9,
+      -79.7, 16.3,
+      -79.8, 16.0,
+      -79.9, 15.8,
+      -79.9, 15.7,
+      -80.3, 16.2,
+      -81.1, 16.6,
+      -81.8, 16.6,
+      -82.2, 17.0,
+      -82.8, 17.3,
+      -83.4, 17.4,
+      -84.0, 17.9,
+      -84.7, 18.1,
+      -85.2, 18.3,
+      -85.5, 18.6,
+      -85.8, 19.1,
+      -86.1, 19.5,
+      -86.4, 20.1,
+      -86.7, 20.3,
+      -86.8, 20.6,
+      -86.8, 20.6,
+      -86.9, 20.8,
+      -87.0, 20.8,
+      -87.1, 21.0,
+      -87.1, 21.3,
+      -87.0, 21.6,
+      -86.8, 21.8,
+      -86.1, 22.4,
+      -85.4, 23.1,
+      -84.3, 24.0,
+      -83.1, 25.0,
+      -81.7, 25.9,
+      -81.0, 26.2,
+      -78.8, 28.0,
+      -76.0, 30.1,
+      -72.0, 33.3,
+      -67.9, 36.8,
+      -63.5, 40.5,
+      -60.0, 42.5,
+      -57.5, 44.0,
+      -55.0, 45.0,
+      -52.0, 45.5
+    ), ncol = 2, byrow = TRUE)
+    spatial_lines <- SpatialLines(list(Lines(list(Line(coords = coordinates_matrix)), ID = "1")))
+    
     leafletProxy("map") %>%
       clearMarkers() %>%
       removeArrowhead(layerId = NULL) %>%
@@ -135,7 +191,7 @@ server <- function(input, output, session) {
         color = "red",
         stroke = FALSE, fillOpacity = 0.5
       ) %>%
-      addArrowhead(data = test_points, color = "red") %>%
+      addArrowhead(data = spatial_lines, color = "red") %>%
       fitBounds(lng1 = min(mic_df()$X.lng.), lat1 = min(mic_df()$X.lat.),
                 lng2 = max(mic_df()$X.lng.), lat2 = max(mic_df()$X.lat.))
   })
@@ -191,7 +247,7 @@ server <- function(input, output, session) {
     # # the above steps can be merged into a single editData() call; see examples below
   })
   
-  arrow_data <- reactiveValues(coordinates = matrix(nrow = 0, ncol = 2))
+  arrows <- reactiveValues(coordinates = array())
   
   observeEvent(input$recording_table_rows_selected, {
     selected_rows = input$recording_table_rows_selected
@@ -200,7 +256,8 @@ server <- function(input, output, session) {
     
     radius = 1000 # meters. todo: calculate the optimum radius given mic coordinates
 
-    arrow_coordinates_cum <- matrix(nrow = 0, ncol = 2)
+    # arrow_coordinates_cum <- matrix(nrow = 0, ncol = 2)
+    arrow_coordinates_total <- array(NA, dim = c(2, 2, length(selected_mics)))
     
     for (i in 1:length(selected_mics)) {
       selected_mic_lat <- mic_df()$X.lat.[selected_mics[i]]
@@ -213,19 +270,19 @@ server <- function(input, output, session) {
       # calculate new arrowhead coordinates from mic coordinates and measured detection bearing
       arrow_head_coordinates <- calculate_arrow_head_coordinates(selected_mic_lat, selected_mic_lng, selected_bearings, radius)
       arrow_coordinates <- rbind(selected_mic_coordinates, arrow_head_coordinates)
+      rownames(arrow_coordinates) = NULL
+      colnames(arrow_coordinates) = c("lng", "lat")
       
-      arrow_coordinates_cum <- rbind(arrow_coordinates_cum, arrow_coordinates)
+      # arrow_coordinates_cum <- rbind(arrow_coordinates_cum, arrow_coordinates)
+      arrow_coordinates_total[, , i] <- arrow_coordinates
     }
-    rownames(arrow_coordinates_cum) = NULL
-    colnames(arrow_coordinates_cum) = c("lng", "lat")
-    arrow_data$coordinates <- arrow_coordinates_cum
-    print(arrow_coordinates_cum)
+    arrows$coordinates = arrow_coordinates_total
   })
   
-  observeEvent(arrow_data$coordinates, {
-    print("hi")
+  observeEvent(arrows$coordinates, {
+    print("updated coordinates...")
   })
-  
+
   # test #
   # create a reactiveValues to store the edited data
   # edited_data <- reactiveValues(df = NULL)
@@ -238,8 +295,6 @@ server <- function(input, output, session) {
   observeEvent(input$recording_table_cell_edit, {
     # info <- input$recording_table_cell_edit
     # str(info)
-
-    print("hi")
 
     # # Check if the data table is not empty and if a cell was edited
     # if (!is.null(info) && !is.null(info$value)) {
