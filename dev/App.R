@@ -76,23 +76,10 @@ ui <- fluidPage(
         step = 60,
         timeFormat = "%H:%M"
       )
-      
-      # selectInput(
-      #   inputId = "selected_mic_ID",
-      #   label = "Filter Mic ID",
-      #   choices = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16),
-      #   selected = NULL,
-      #   multiple = FALSE,
-      #   selectize = TRUE,
-      #   width = NULL,
-      #   size = NULL
-      # )
-      ###
     ),
     
     ### Main panel for displaying outputs
     mainPanel(
-      plotOutput(outputId = "distPlot"),
       DT::dataTableOutput("recording_table")
     )
     ###
@@ -279,8 +266,16 @@ server <- function(input, output, session) {
     arrows$coordinates = arrow_coordinates_total
   })
   
+  # update map with bearing directions for selected recordings
   observeEvent(arrows$coordinates, {
-    print("updated coordinates...")
+    print("Updated coordinates...")
+    print(arrows$coordinates)
+    
+    # prevents plotting arrows on declaration
+    if (!any(is.na(arrows$coordinates))) {
+      leafletProxy("map") %>%
+        addArrowhead(data = arrows$coordinates, color = "red")
+    }
   })
 
   # test #
