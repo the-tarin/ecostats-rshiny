@@ -115,7 +115,6 @@ server <- function(input, output, session) {
   observeEvent(input$fileMic, {
     leafletProxy("map") %>%
       clearMarkers() %>%
-      removeArrowhead(layerId = NULL) %>%
       addCircleMarkers(
         data = mic_df(),
         lat = ~X.lat.,
@@ -188,6 +187,7 @@ server <- function(input, output, session) {
     radius = 1000 # meters. todo: calculate the optimum radius given mic coordinates
 
     arrow_coordinates_total <- array(NA, dim = c(2, 2, length(selected_mics)))
+    # arrow_coordinates_total <- list()
     
     for (i in 1:length(selected_mics)) {
       selected_mic_lat <- mic_df()$X.lat.[selected_mics[i]]
@@ -204,24 +204,32 @@ server <- function(input, output, session) {
       colnames(arrow_coordinates) = c("lng", "lat")
       
       arrow_coordinates_total[, , i] <- arrow_coordinates
+      # arrow_coordinates_total[[i]] <- Line(arrow_coordinates)
     }
+    # arrow_coordinates_total_lines <- SpatialLines(arrow_coordinates_total)
     arrows$coordinates = arrow_coordinates_total
   })
   
   # update map with bearing directions for selected recordings
+  # with array of matrices
   observeEvent(arrows$coordinates, {
-    print("Updated coordinates...")
-    
+    leafletProxy("map") %>% clearGroup("all")
     # prevents plotting arrows on declaration
     if (!any(is.na(arrows$coordinates))) {
-      proxy <- leafletProxy("map")
-      proxy < - proxy %>% removeArrowhead(layerId = NULL)
-      
       for (i in 1:dim(arrows$coordinates)[3]) {
-        proxy <- proxy %>% addArrowhead(data = arrows$coordinates[,,i], color = "red")
+        leafletProxy("map") %>% addArrowhead(data = arrows$coordinates[,,i], group = "all", layerId = paste0("arrow_", i), color = "red")
       }
     }
   })
+
+  # with spatialLines
+  # observeEvent(arrows$coordinates, {
+  #   # prevents plotting arrows on declaration
+  #   if (!any(is.na(arrows$coordinates))) {
+  #     # leafletProxy("map") %>% removeArrowhead(layerId = "all")
+  #     leafletProxy("map") %>% addArrowhead(data = arrows$coordinates[,,i], color = "red")
+  #   }
+  # })
 
   # test #
   # create a reactiveValues to store the edited data
