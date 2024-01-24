@@ -113,60 +113,6 @@ server <- function(input, output, session) {
   
   ### add mic markers when mic_df is uploaded
   observeEvent(input$fileMic, {
-    arrow1 <- matrix(c(106.6407, 106.6480, 14.25521, 14.26078), 2)
-
-    coordinates_matrix <- matrix(c(
-      -78.5, 17.6,
-      -78.8, 17.6,
-      -79.0, 17.5,
-      -79.2, 17.5,
-      -79.4, 17.5,
-      -79.6, 17.4,
-      -79.6, 16.9,
-      -79.7, 16.3,
-      -79.8, 16.0,
-      -79.9, 15.8,
-      -79.9, 15.7,
-      -80.3, 16.2,
-      -81.1, 16.6,
-      -81.8, 16.6,
-      -82.2, 17.0,
-      -82.8, 17.3,
-      -83.4, 17.4,
-      -84.0, 17.9,
-      -84.7, 18.1,
-      -85.2, 18.3,
-      -85.5, 18.6,
-      -85.8, 19.1,
-      -86.1, 19.5,
-      -86.4, 20.1,
-      -86.7, 20.3,
-      -86.8, 20.6,
-      -86.8, 20.6,
-      -86.9, 20.8,
-      -87.0, 20.8,
-      -87.1, 21.0,
-      -87.1, 21.3,
-      -87.0, 21.6,
-      -86.8, 21.8,
-      -86.1, 22.4,
-      -85.4, 23.1,
-      -84.3, 24.0,
-      -83.1, 25.0,
-      -81.7, 25.9,
-      -81.0, 26.2,
-      -78.8, 28.0,
-      -76.0, 30.1,
-      -72.0, 33.3,
-      -67.9, 36.8,
-      -63.5, 40.5,
-      -60.0, 42.5,
-      -57.5, 44.0,
-      -55.0, 45.0,
-      -52.0, 45.5
-    ), ncol = 2, byrow = TRUE)
-    spatial_lines <- SpatialLines(list(Lines(list(Line(coords = coordinates_matrix)), ID = "1")))
-    
     leafletProxy("map") %>%
       clearMarkers() %>%
       removeArrowhead(layerId = NULL) %>%
@@ -178,7 +124,6 @@ server <- function(input, output, session) {
         color = "red",
         stroke = FALSE, fillOpacity = 0.5
       ) %>%
-      addArrowhead(data = spatial_lines, color = "red") %>%
       fitBounds(lng1 = min(mic_df()$X.lng.), lat1 = min(mic_df()$X.lat.),
                 lng2 = max(mic_df()$X.lng.), lat2 = max(mic_df()$X.lat.))
   })
@@ -239,11 +184,9 @@ server <- function(input, output, session) {
   observeEvent(input$recording_table_rows_selected, {
     selected_rows = input$recording_table_rows_selected
     selected_mics = recording_df()$X.mic_ID.[selected_rows]
-    print(selected_mics)
     
     radius = 1000 # meters. todo: calculate the optimum radius given mic coordinates
 
-    # arrow_coordinates_cum <- matrix(nrow = 0, ncol = 2)
     arrow_coordinates_total <- array(NA, dim = c(2, 2, length(selected_mics)))
     
     for (i in 1:length(selected_mics)) {
@@ -260,7 +203,6 @@ server <- function(input, output, session) {
       rownames(arrow_coordinates) = NULL
       colnames(arrow_coordinates) = c("lng", "lat")
       
-      # arrow_coordinates_cum <- rbind(arrow_coordinates_cum, arrow_coordinates)
       arrow_coordinates_total[, , i] <- arrow_coordinates
     }
     arrows$coordinates = arrow_coordinates_total
@@ -269,12 +211,15 @@ server <- function(input, output, session) {
   # update map with bearing directions for selected recordings
   observeEvent(arrows$coordinates, {
     print("Updated coordinates...")
-    print(arrows$coordinates)
     
     # prevents plotting arrows on declaration
     if (!any(is.na(arrows$coordinates))) {
-      leafletProxy("map") %>%
-        addArrowhead(data = arrows$coordinates, color = "red")
+      proxy <- leafletProxy("map")
+      proxy < - proxy %>% removeArrowhead(layerId = NULL)
+      
+      for (i in 1:dim(arrows$coordinates)[3]) {
+        proxy <- proxy %>% addArrowhead(data = arrows$coordinates[,,i], color = "red")
+      }
     }
   })
 
