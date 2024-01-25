@@ -80,7 +80,8 @@ ui <- fluidPage(
     
     ### Main panel for displaying outputs
     mainPanel(
-      DT::dataTableOutput("recording_table")
+      DT::dataTableOutput("recording_table"),
+      actionButton("test", " Test")
     )
     ###
   )
@@ -167,7 +168,6 @@ server <- function(input, output, session) {
   proxy_recording_table = dataTableProxy('recording_table')
   
   observeEvent(input$recording_table_cell_edit, {
-    print("hi")
     print(input$recording_table_cell_edit)
     # browser()
     # edited_data$df <- editData(edited_data$df, input$recording_table_cell_edit, 'recording_table')
@@ -178,10 +178,18 @@ server <- function(input, output, session) {
     # # the above steps can be merged into a single editData() call; see examples below
   })
   
+  observeEvent(input$test, {
+    print(input$recording_table_rows_selected)
+  })
+  
   arrows <- reactiveValues(coordinates = array())
   
-  observeEvent(input$recording_table_rows_selected, {
+  observeEvent(input$recording_table_rows_selected, ignoreNULL = FALSE, {
     selected_rows = input$recording_table_rows_selected
+    if (is.null(selected_rows)) {
+      arrows$coordinates = array()
+      return()
+    }
     selected_mics = recording_df()$X.mic_ID.[selected_rows]
     
     radius = 1000 # meters. todo: calculate the optimum radius given mic coordinates
@@ -221,15 +229,6 @@ server <- function(input, output, session) {
       }
     }
   })
-
-  # with spatialLines
-  # observeEvent(arrows$coordinates, {
-  #   # prevents plotting arrows on declaration
-  #   if (!any(is.na(arrows$coordinates))) {
-  #     # leafletProxy("map") %>% removeArrowhead(layerId = "all")
-  #     leafletProxy("map") %>% addArrowhead(data = arrows$coordinates[,,i], color = "red")
-  #   }
-  # })
 
   # test #
   # create a reactiveValues to store the edited data
