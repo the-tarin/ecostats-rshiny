@@ -132,7 +132,7 @@ server <- function(input, output, session) {
   ### update
   # recording_df <- reactiveVal(data.frame())
   # observeEvent(input$fileRecordings, {
-  #   recording_df(recording_df())
+  #   recording_df(input$fileRecordings)
   # })
   
   ### main recordings datatable
@@ -156,32 +156,28 @@ server <- function(input, output, session) {
     # }
       
     # datatable(recording_df, editable = list(target = 'row', disable = list(columns = c(0, 2, 3, 4, 5, 6, 7))), rownames = FALSE)
-    datatable(recording_df_filtered, editable = list(target = 'cell', disable = list(columns = c(0, 2, 3, 4, 5, 6, 7))), rownames = FALSE)
+    datatable(recording_df_filtered, editable = list(target = 'cell', disable = list(columns = c(1, 2, 3, 4, 5, 6, 7, 8))), rownames = FALSE)
   })
   ###
-  
-  ### selected mic from datatable
-  # todo: need to select mic ID from filtered datatable
-  
-  edited_data <- reactiveValues(df = NULL)
   
   proxy_recording_table = dataTableProxy('recording_table')
   
   observeEvent(input$recording_table_cell_edit, {
-    print(input$recording_table_cell_edit)
-    # browser()
-    # edited_data$df <- editData(edited_data$df, input$recording_table_cell_edit, 'recording_table')
-    # info = input$recording_table_cell_edit
-    # str(info)  # check what info looks like (a data frame of 3 columns)
-    # recording_df <<- editData(recording_df, info)
+    browser()
+    info = input$recording_table_cell_edit
+    str(info)
+    recording_df <<- editData(recording_df, info)
     # replaceData(proxy_recording_table, recording_df, resetPaging = FALSE)  # important
     # # the above steps can be merged into a single editData() call; see examples below
   })
   
+  ### testing purposes
   observeEvent(input$test, {
     print(input$recording_table_rows_selected)
   })
+  ###
   
+  ### adding arrows to map
   arrows <- reactiveValues(coordinates = array())
   
   observeEvent(input$recording_table_rows_selected, ignoreNULL = FALSE, {
@@ -219,7 +215,7 @@ server <- function(input, output, session) {
   })
   
   # update map with bearing directions for selected recordings
-  # with array of matrices
+  # implementation with array of matrices. todo: try using sp package objects
   observeEvent(arrows$coordinates, {
     leafletProxy("map") %>% clearGroup("all")
     # prevents plotting arrows on declaration
@@ -229,6 +225,7 @@ server <- function(input, output, session) {
       }
     }
   })
+  ###
 
   # test #
   # create a reactiveValues to store the edited data
@@ -244,7 +241,7 @@ server <- function(input, output, session) {
     # str(info)
 
     # # Check if the data table is not empty and if a cell was edited
-    # if (!is.null(info) && !is.null(info$value)) {
+    # if (!is.null(info) && !is.null(info$value)) {cd ..
     #   edited_data$df <- editData(edited_data$df, info)
     # }
   })
@@ -269,6 +266,10 @@ server <- function(input, output, session) {
     
     # reorder by measured datetime of gibbon call
     recording_df <- recording_df[order(recording_df$X.measured_call_datetime), ]
+    
+    animal_ID <- rep(-1, nrow(recording_df))
+    print(animal_ID)
+    recording_df <- cbind(animal_ID, recording_df)
     
     return(recording_df)
   })
