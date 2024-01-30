@@ -4,7 +4,6 @@ library(shiny)
 library(leaflet)
 library(leaflet.extras)
 library(leaflet.extras2)
-library(sp)
 
 # dates and data manipulation
 library(dplyr)
@@ -129,33 +128,14 @@ server <- function(input, output, session) {
   })
   ###
   
-  ### update
-  # recording_df <- reactiveVal(data.frame())
-  # observeEvent(input$fileRecordings, {
-  #   recording_df(input$fileRecordings)
-  # })
-  
   ### main recordings datatable
   output$recording_table <- DT::renderDataTable({
-    recording_df_filtered = recording_df() %>%
+    recording_df_filtered = recording_data$recording_master_df %>%
       filter(
         X.measured_call_datetime. >= as.POSIXct(input$selected_time_range[1], format = "%Y-%m-%d %H:%M:%S"),
         X.measured_call_datetime. <= as.POSIXct(input$selected_time_range[2], format = "%Y-%m-%d %H:%M:%S")
       )
     
-    # # Apply the edits to the filtered data
-    # if (!is.null(edited_data$df)) {
-    #   print("hello1")
-    #   recording_df_filtered <- merge(
-    #     recording_df_filtered,
-    #     edited_data$df,
-    #     by = "recording_table_row_id", # Add a unique identifier for each row
-    #     all.x = TRUE
-    #   )
-    #   print("hello2")
-    # }
-      
-    # datatable(recording_df, editable = list(target = 'row', disable = list(columns = c(0, 2, 3, 4, 5, 6, 7))), rownames = FALSE)
     datatable(recording_df_filtered, editable = list(target = 'cell', disable = list(columns = c(1, 2, 3, 4, 5, 6, 7, 8))), rownames = FALSE)
   })
   ###
@@ -163,12 +143,9 @@ server <- function(input, output, session) {
   proxy_recording_table = dataTableProxy('recording_table')
   
   observeEvent(input$recording_table_cell_edit, {
-    browser()
     info = input$recording_table_cell_edit
     str(info)
-    recording_df <<- editData(recording_df, info)
-    # replaceData(proxy_recording_table, recording_df, resetPaging = FALSE)  # important
-    # # the above steps can be merged into a single editData() call; see examples below
+    recording_data$recording_master_df[info$row, info$col+1] = info$value
   })
   
   ### testing purposes
@@ -186,7 +163,7 @@ server <- function(input, output, session) {
       arrows$coordinates = array()
       return()
     }
-    selected_mics = recording_df()$X.mic_ID.[selected_rows]
+    selected_mics = recording_data$recording_master_df$X.mic_ID.[selected_rows]
     
     radius = 1000 # meters. todo: calculate the optimum radius given mic coordinates
 
@@ -199,7 +176,7 @@ server <- function(input, output, session) {
       
       selected_mic_coordinates <- c(selected_mic_lng, selected_mic_lat)
       
-      selected_bearings <- recording_df()$X.measured_bearing.[selected_rows[i]]
+      selected_bearings <- recording_data$recording_master_df$X.measured_bearing.[selected_rows[i]]
       
       # calculate new arrowhead coordinates from mic coordinates and measured detection bearing
       arrow_head_coordinates <- calculate_arrow_head_coordinates(selected_mic_lat, selected_mic_lng, selected_bearings, radius)
@@ -227,26 +204,6 @@ server <- function(input, output, session) {
   })
   ###
 
-  # test #
-  # create a reactiveValues to store the edited data
-  # edited_data <- reactiveValues(df = NULL)
-
-  # hi <- reactive({
-  #   input$recording_table_cell_edit
-  # })
-
-  # observer to update edited_data when the table is edited
-  observeEvent(input$recording_table_cell_edit, {
-    # info <- input$recording_table_cell_edit
-    # str(info)
-
-    # # Check if the data table is not empty and if a cell was edited
-    # if (!is.null(info) && !is.null(info$value)) {cd ..
-    #   edited_data$df <- editData(edited_data$df, info)
-    # }
-  })
-  ###
-
   ### file uploads
   mic_df <- reactive({
     req(input$fileMic)
@@ -257,22 +214,44 @@ server <- function(input, output, session) {
     return(mic_df)
   })
   
-  recording_df <- reactive({
+  recording_data <- reactiveValues(
+    recording_temp_df = NULL,
+    recording_master_df = NULL
+  )
+  
+  observeEvent(input$fileRecordings, {
     req(input$fileRecordings)
-    recording_df <- read.csv(input$fileRecordings$datapath,
+    
+    recording_master_df <- read.csv(input$fileRecordings$datapath,
                              header = TRUE,
                              sep = ",",
                              quote = "")
     
     # reorder by measured datetime of gibbon call
-    recording_df <- recording_df[order(recording_df$X.measured_call_datetime), ]
+    recording_master_df <- recording_master_df[order(recording_master_df$X.measured_call_datetime), ]
     
-    animal_ID <- rep(-1, nrow(recording_df))
-    print(animal_ID)
-    recording_df <- cbind(animal_ID, recording_df)
+    animal_ID <- rep(-1, nrow(recording_master_df))
+    recording_master_df <- cbind(animal_ID, recording_master_df)
     
-    return(recording_df)
+    recording_data$recording_temp_df <- recording_master_df
+    recording_data$recording_master_df <- recording_master_df
   })
+  
+  # recording_df <- reactive({
+  #   req(input$fileRecordings)
+  #   recording_df <- read.csv(input$fileRecordings$datapath,
+  #                            header = TRUE,
+  #                            sep = ",",
+  #                            quote = "")
+  #   
+  #   # reorder by measured datetime of gibbon call
+  #   recording_df <- recording_df[order(recording_df$X.measured_call_datetime), ]
+  #   
+  #   animal_ID <- rep(-1, nrow(recording_df))
+  #   recording_df <- cbind(animal_ID, recording_df)
+  #   
+  #   return(recording_df)
+  # })
   
   gibbon_df <- reactive({
     req(input$fileGibbons)
