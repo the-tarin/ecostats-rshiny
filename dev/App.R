@@ -135,17 +135,17 @@ server <- function(input, output, session) {
         X.measured_call_datetime. >= as.POSIXct(input$selected_time_range[1], format = "%Y-%m-%d %H:%M:%S"),
         X.measured_call_datetime. <= as.POSIXct(input$selected_time_range[2], format = "%Y-%m-%d %H:%M:%S")
       )
-    
+    recording_data$recording_temp_df = recording_df_filtered
     datatable(recording_df_filtered, editable = list(target = 'cell', disable = list(columns = c(1, 2, 3, 4, 5, 6, 7, 8))), rownames = FALSE)
   })
   ###
   
-  proxy_recording_table = dataTableProxy('recording_table')
-  
+  ### save changes from datatable edits
   observeEvent(input$recording_table_cell_edit, {
-    info = input$recording_table_cell_edit
-    str(info)
-    recording_data$recording_master_df[info$row, info$col+1] = info$value
+    edit = input$recording_table_cell_edit
+    # find the recording ID which has been edited from datatable (temp dataframe) and save changes to master dataframe
+    edited_recording_ID <- recording_data$recording_temp_df[edit$row, edit$col+2]
+    recording_data$recording_master_df[recording_data$recording_master_df[,2] == edited_recording_ID, 1] <- edit$value
   })
   
   ### testing purposes
@@ -236,22 +236,6 @@ server <- function(input, output, session) {
     recording_data$recording_temp_df <- recording_master_df
     recording_data$recording_master_df <- recording_master_df
   })
-  
-  # recording_df <- reactive({
-  #   req(input$fileRecordings)
-  #   recording_df <- read.csv(input$fileRecordings$datapath,
-  #                            header = TRUE,
-  #                            sep = ",",
-  #                            quote = "")
-  #   
-  #   # reorder by measured datetime of gibbon call
-  #   recording_df <- recording_df[order(recording_df$X.measured_call_datetime), ]
-  #   
-  #   animal_ID <- rep(-1, nrow(recording_df))
-  #   recording_df <- cbind(animal_ID, recording_df)
-  #   
-  #   return(recording_df)
-  # })
   
   gibbon_df <- reactive({
     req(input$fileGibbons)
