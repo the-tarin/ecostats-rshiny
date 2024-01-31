@@ -82,6 +82,7 @@ ui <- fluidPage(
     mainPanel(
       DT::dataTableOutput("recording_table"),
       actionButton("test", "Test"),
+      actionButton("set_new_animal_ID", "Set New Animal ID"),
       downloadButton("download_button", "Download Recordings"),
     )
     ###
@@ -96,7 +97,7 @@ server <- function(input, output, session) {
       "selected_time_range",
       min = as.POSIXct(paste(input$selected_date, "00:00:00", tz = "GMT")),
       max = as.POSIXct(paste(input$selected_date, "23:59:59", tz = "GMT")),
-      value = c(as.POSIXct(paste(input$selected_date, "08:00:00", tz = "GMT")), 
+      value = c(as.POSIXct(paste(input$selected_date, "03:00:00", tz = "GMT")), 
                 as.POSIXct(paste(input$selected_date, "17:00:00", tz = "GMT")))
     )
   })
@@ -150,6 +151,18 @@ server <- function(input, output, session) {
     # find the recording ID which has been edited from datatable (temp dataframe) and save changes to master dataframe
     edited_recording_ID <- recording_data$recording_temp_df[edit$row, edit$col+2]
     recording_data$recording_master_df[recording_data$recording_master_df[,2] == edited_recording_ID, 1] <- edit$value
+  })
+  
+  observeEvent(input$set_new_animal_ID, {
+    selected_rows = input$recording_table_rows_selected
+    selected_recording_ID <- recording_data$recording_temp_df[selected_rows, 2]
+    
+    print(selected_recording_ID)
+    
+    # todo: issues with not being able to set animal ID. Probably due to some timing issue.
+    # generate and set new animal ID
+    # max_animal_ID <- max(recording_data$recording_master_df[,1])
+    # recording_data$recording_master_df[recording_data$recording_master_df[,2] == selected_recording_ID, 1] <- 500
   })
   
   ### testing purposes
@@ -238,7 +251,7 @@ server <- function(input, output, session) {
     # reorder by measured datetime of gibbon call
     recording_master_df <- recording_master_df[order(recording_master_df$X.measured_call_datetime), ]
     
-    animal_ID <- rep(-1, nrow(recording_master_df))
+    animal_ID <- rep(0, nrow(recording_master_df))
     recording_master_df <- cbind(animal_ID, recording_master_df)
     
     recording_data$recording_temp_df <- recording_master_df
