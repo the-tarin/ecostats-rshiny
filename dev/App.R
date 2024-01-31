@@ -130,6 +130,7 @@ server <- function(input, output, session) {
   
   ### main recordings datatable
   output$recording_table <- DT::renderDataTable({
+    req(input$fileRecordings)
     recording_df_filtered = recording_data$recording_master_df %>%
       filter(
         X.measured_call_datetime. >= as.POSIXct(input$selected_time_range[1], format = "%Y-%m-%d %H:%M:%S"),
