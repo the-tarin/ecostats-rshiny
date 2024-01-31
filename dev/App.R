@@ -1,4 +1,5 @@
 library(shiny)
+library(shinyFiles)
 
 # maps
 library(leaflet)
@@ -80,7 +81,8 @@ ui <- fluidPage(
     ### Main panel for displaying outputs
     mainPanel(
       DT::dataTableOutput("recording_table"),
-      actionButton("test", " Test")
+      actionButton("test", "Test"),
+      downloadButton("download_button", "Download Recordings"),
     )
     ###
   )
@@ -130,6 +132,7 @@ server <- function(input, output, session) {
   
   ### main recordings datatable
   output$recording_table <- DT::renderDataTable({
+    # todo: create proxy to stop having to reinitialise datatable 
     req(input$fileRecordings)
     recording_df_filtered = recording_data$recording_master_df %>%
       filter(
@@ -153,6 +156,10 @@ server <- function(input, output, session) {
   observeEvent(input$test, {
     print(input$recording_table_rows_selected)
   })
+  ###
+  
+  ### download recordings
+  # todo: ...
   ###
   
   ### adding arrows to map
