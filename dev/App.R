@@ -41,7 +41,7 @@ calculate_arrow_head_coordinates <- function(lat, lng, bearing, radius) {
 ui <- fluidPage(
   titlePanel("Survey of Orangutan Noise Data"),
   ### map
-  leafletOutput("map"),
+  leafletOutput("map", width = "100%", height = 800),
   ###
   sidebarLayout(
     sidebarPanel(
@@ -132,6 +132,7 @@ server <- function(input, output, session) {
   ###
   
   ### main recordings datatable
+  proxy <- DT::dataTableProxy('recording_table')
   output$recording_table <- DT::renderDataTable({
     # todo: create proxy to stop having to reinitialise datatable 
     req(input$fileRecordings)
@@ -156,13 +157,16 @@ server <- function(input, output, session) {
   observeEvent(input$set_new_animal_ID, {
     selected_rows = input$recording_table_rows_selected
     selected_recording_ID <- recording_data$recording_temp_df[selected_rows, 2]
+    selected_recording_ID <- as.integer(selected_recording_ID)
     
     print(selected_recording_ID)
     
     # todo: issues with not being able to set animal ID. Probably due to some timing issue.
     # generate and set new animal ID
-    # max_animal_ID <- max(recording_data$recording_master_df[,1])
-    # recording_data$recording_master_df[recording_data$recording_master_df[,2] == selected_recording_ID, 1] <- 500
+    max_animal_ID <- max(recording_data$recording_master_df[,1])
+    print(recording_data$recording_master_df[, 2])
+    # selected_rows <- which(recording_data$recording_master_df[, 2] == selected_recording_ID)
+    recording_data$recording_master_df[recording_data$recording_master_df[, 2] == selected_recording_ID, 1] <- max_animal_ID + 1
   })
   
   ### testing purposes
@@ -254,6 +258,8 @@ server <- function(input, output, session) {
     animal_ID <- rep(0, nrow(recording_master_df))
     recording_master_df <- cbind(animal_ID, recording_master_df)
     
+    recording_master_df$X.recording_ID <- as.integer(recording_master_df$X.recording_ID)
+    
     recording_data$recording_temp_df <- recording_master_df
     recording_data$recording_master_df <- recording_master_df
   })
@@ -273,8 +279,8 @@ server <- function(input, output, session) {
     leaflet() %>%
       addProviderTiles(providers$Esri.WorldImagery,
                        options = providerTileOptions(noWrap = TRUE)
-      )
-      # todo: fit to page
+      ) %>%
+      setView(lng = 0, lat = 0, zoom = 3)
   })
   ###
 }
