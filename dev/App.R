@@ -39,7 +39,7 @@ calculate_arrow_head_coordinates <- function(lat, lng, bearing, radius) {
 }
 
 ui <- fluidPage(
-  titlePanel("Survey of Orangutan Noise Data"),
+  titlePanel("Survey of Acoustic Spatial-Recapture Data"),
   ### map
   leafletOutput("map", width = "100%", height = 800),
   ###
@@ -223,7 +223,8 @@ server <- function(input, output, session) {
     # prevents plotting arrows on declaration
     if (!any(is.na(arrows$coordinates))) {
       for (i in 1:dim(arrows$coordinates)[3]) {
-        leafletProxy("map") %>% addArrowhead(data = arrows$coordinates[,,i], group = "all", layerId = paste0("arrow_", i), color = "red")
+        leafletProxy("map") %>% addArrowhead(data = arrows$coordinates[,,i], group = "all", layerId = paste0("arrow_", i), color = "red", opacity = 50, 
+                                             options = arrowheadOptions(yawn = 40, fill = FALSE))
       }
     }
   })
