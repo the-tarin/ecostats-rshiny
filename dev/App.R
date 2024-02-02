@@ -165,8 +165,9 @@ server <- function(input, output, session) {
     # generate and set new animal ID
     max_animal_ID <- max(recording_data$recording_master_df[,1])
     print(recording_data$recording_master_df[, 2])
-    # selected_rows <- which(recording_data$recording_master_df[, 2] == selected_recording_ID)
-    recording_data$recording_master_df[recording_data$recording_master_df[, 2] == selected_recording_ID, 1] <- max_animal_ID + 1
+    selected_rows <- which(recording_data$recording_master_df[, 2] == selected_recording_ID)
+    print(selected_rows)
+    recording_data$recording_master_df[selected_rows, 1] <- max_animal_ID + 1
   })
   
   ### testing purposes
