@@ -142,7 +142,9 @@ server <- function(input, output, session) {
         X.measured_call_datetime. <= as.POSIXct(input$selected_time_range[2], format = "%Y-%m-%d %H:%M:%S")
       )
     recording_data$recording_temp_df = recording_df_filtered
-    datatable(recording_df_filtered, editable = list(target = 'cell', disable = list(columns = c(1, 2, 3, 4, 5, 6, 7, 8))), rownames = FALSE)
+    
+    datatable(recording_df_filtered, editable = list(target = 'cell', disable = list(columns = c(1, 2, 3, 4, 5, 6, 7, 8))), rownames = FALSE) %>%
+      formatRound(columns=c('X.ground_truth_bearing.', 'X.measured_bearing.'), digits=3)
   })
   ###
   
