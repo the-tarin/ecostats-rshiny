@@ -143,7 +143,7 @@ server <- function(input, output, session) {
       )
     recording_data$recording_temp_df = recording_df_filtered
     
-    datatable(recording_df_filtered, editable = list(target = 'cell', disable = list(columns = c(1, 2, 3, 4, 5, 6, 7, 8))), rownames = FALSE) %>%
+    datatable(recording_df_filtered, editable = list(target = 'cell', disable = list(columns = c(1, 2, 3, 4, 5, 6, 7, 8))), rownames = FALSE,  extensions = 'Buttons', options = list(dom = 'Bfrtip', buttons = I('colvis'))) %>%
       formatRound(columns=c('X.ground_truth_bearing.', 'X.measured_bearing.'), digits=3)
   })
   ###
