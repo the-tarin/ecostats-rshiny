@@ -1,5 +1,5 @@
 library(shiny)
-library(shinyFiles)
+library(shinyTime)
 
 # maps
 library(leaflet)
@@ -75,7 +75,20 @@ ui <- fluidPage(
         value = c(as.POSIXct("1970-01-01 08:00:00"), as.POSIXct("1970-01-01 17:00:00")),
         step = 60,
         timeFormat = "%H:%M"
-      )
+      ),
+      
+      timeInput("selected_start_time", label = "Select Start Time:"),
+      timeInput("selected_end_time", label = "Select End Time:"),
+      
+      sliderInput(
+        "selected_time_range_minute",
+        "Select Time Range",
+        min = as.POSIXct("1970-01-01 00:00:00"),
+        max = as.POSIXct("1970-01-01 23:59:59"),
+        value = c(as.POSIXct("1970-01-01 08:00:00"), as.POSIXct("1970-01-01 17:00:00")),
+        step = 60,
+        timeFormat = "%H:%M"
+      ),
     ),
     
     ### Main panel for displaying outputs
@@ -258,6 +271,9 @@ server <- function(input, output, session) {
     
     # reorder by measured datetime of gibbon call
     recording_master_df <- recording_master_df[order(recording_master_df$X.measured_call_datetime), ]
+    
+    recording_first_call_datetime <- recording_master_df$X.measured_call_datetime[1]
+    recording_last_call_datetime <- recording_master_df$X.measured_call_datetime[-1]
     
     animal_ID <- rep(0, nrow(recording_master_df))
     recording_master_df <- cbind(animal_ID, recording_master_df)
