@@ -114,6 +114,15 @@ server <- function(input, output, session) {
                 as.POSIXct(paste(input$selected_date, "17:00:00", tz = "GMT")))
     )
   })
+  
+  observeEvent(input$fileRecordings, {
+    updateSliderInput(
+      session,
+      "selected_time_range",
+      value = c(as.POSIXct(recording_data$recording_first_call_datetime, tz = "GMT"), 
+                as.POSIXct(recording_data$recording_last_call_datetime, tz = "GMT"))
+    )
+  })
   ###
   
   ### update select date input to earliest date in the recording data
@@ -258,7 +267,9 @@ server <- function(input, output, session) {
   
   recording_data <- reactiveValues(
     recording_temp_df = NULL,
-    recording_master_df = NULL
+    recording_master_df = NULL,
+    recording_first_call_datetime = as.POSIXct("1970-01-01 00:00:00"),
+    recording_last_call_datetime = as.POSIXct("1970-01-01 00:00:00")
   )
   
   observeEvent(input$fileRecordings, {
@@ -272,8 +283,11 @@ server <- function(input, output, session) {
     # reorder by measured datetime of gibbon call
     recording_master_df <- recording_master_df[order(recording_master_df$X.measured_call_datetime), ]
     
-    recording_first_call_datetime <- recording_master_df$X.measured_call_datetime[1]
-    recording_last_call_datetime <- recording_master_df$X.measured_call_datetime[-1]
+    recording_data$recording_first_call_datetime <- recording_master_df$X.measured_call_datetime[1]
+    recording_data$recording_last_call_datetime <- recording_master_df$X.measured_call_datetime[length(recording_master_df$X.measured_call_datetime)]
+    
+    print(recording_data$recording_first_call_datetime)
+    print(recording_data$recording_last_call_datetime)
     
     animal_ID <- rep(0, nrow(recording_master_df))
     recording_master_df <- cbind(animal_ID, recording_master_df)
