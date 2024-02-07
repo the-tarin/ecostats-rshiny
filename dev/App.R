@@ -68,13 +68,14 @@ ui <- fluidPage(
       
       sliderInput(
         "selected_time_range",
-        "Time Range from Data",
+        "Time Range of Data",
         min = as.POSIXct("2023-01-01 00:00:00"),
         max = as.POSIXct("2023-01-01 23:59:59"),
         value = c(as.POSIXct("2023-01-01 08:00:00"), as.POSIXct("2023-01-01 17:00:00")),
-        step = 60
+        step = 1
       ),
       
+      # not sure whether we need this, or we could just automatically update the scope
       # actionButton("set_scope_time_range", "Set Scope Range"),
       
       sliderInput(
@@ -83,7 +84,7 @@ ui <- fluidPage(
         min = as.POSIXct("2023-01-01 00:00:00"),
         max = as.POSIXct("2023-01-01 23:59:59"),
         value = c(as.POSIXct("2023-01-01 08:00:00"), as.POSIXct("2023-01-01 17:00:00")),
-        step = 60
+        step = 1
       )
     ),
     
