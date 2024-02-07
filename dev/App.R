@@ -65,7 +65,7 @@ ui <- fluidPage(
                            ".csv")),
       ###
       ### filters
-      dateInput(inputId = "selected_date", label = "Select Date"),
+      # dateInput(inputId = "selected_date", label = "Select Date"),
       
       sliderInput(
         "selected_time_range",
@@ -104,37 +104,43 @@ ui <- fluidPage(
 
 server <- function(input, output, session) {
   ### change silderInput date based on select date output
-  observeEvent(input$selected_date, {
-    updateSliderInput(
-      session,
-      "selected_time_range",
-      min = as.POSIXct(paste(input$selected_date, "00:00:00", tz = "GMT")),
-      max = as.POSIXct(paste(input$selected_date, "23:59:59", tz = "GMT")),
-      value = c(as.POSIXct(paste(input$selected_date, "03:00:00", tz = "GMT")), 
-                as.POSIXct(paste(input$selected_date, "17:00:00", tz = "GMT")))
-    )
-  })
+  # observeEvent(input$selected_date, {
+  #   updateSliderInput(
+  #     session,
+  #     "selected_time_range",
+  #     min = as.POSIXct(paste(input$selected_date, "00:00:00", tz = "GMT")),
+  #     max = as.POSIXct(paste(input$selected_date, "23:59:59", tz = "GMT")),
+  #     value = c(as.POSIXct(paste(input$selected_date, "03:00:00", tz = "GMT")),
+  #               as.POSIXct(paste(input$selected_date, "17:00:00", tz = "GMT")))
+  #   )
+  # })
   
-  observeEvent(input$fileRecordings, {
+  observeEvent(recording_data$recording_first_call_datetime, ignoreNULL = TRUE, {
+    date_start <- substr(recording_data$recording_first_call_datetime, start = 0, stop = 10)
+    time_start <- substr(recording_data$recording_first_call_datetime, start = 12, stop = 20)
+    date_end <- substr(recording_data$recording_last_call_datetime, start = 0, stop = 10)
+    time_end <- substr(recording_data$recording_last_call_datetime, start = 12, stop = 20)
     updateSliderInput(
       session,
       "selected_time_range",
-      value = c(as.POSIXct(recording_data$recording_first_call_datetime, tz = "GMT"), 
-                as.POSIXct(recording_data$recording_last_call_datetime, tz = "GMT"))
+      min = as.POSIXct(paste("2023-01-01", time_start, tz = "GMT")),
+      max = as.POSIXct(paste("2023-01-01", time_end, tz = "GMT")),
+      value = c(as.POSIXct(paste("2023-01-01", time_start, tz = "GMT")),
+                as.POSIXct(paste("2023-01-01", time_end, tz = "GMT")))
     )
   })
   ###
   
   ### update select date input to earliest date in the recording data
   # todo: complete this to automatically extract the date. Not high priority
-  observeEvent(input$fileRecordings, {
-    updateDateInput(
-      session,
-      "selected_date",
-      value = as.POSIXct("2023-01-01", tz = "GMT")
-      # value = as.POSIXct(format(recording_df$X.measured_call_datetime[1], "%Y-%m-%d"), tz <- "GMT")
-    )
-  })
+  # observeEvent(input$fileRecordings, {
+  #   updateDateInput(
+  #     session,
+  #     "selected_date",
+  #     value = as.POSIXct("2023-01-01", tz = "GMT")
+  #     # value = as.POSIXct(format(recording_df$X.measured_call_datetime[1], "%Y-%m-%d"), tz <- "GMT")
+  #   )
+  # })
   
   ### add mic markers when mic_df is uploaded
   observeEvent(input$fileMic, {
