@@ -138,12 +138,21 @@ server <- function(input, output, session) {
   proxy <- DT::dataTableProxy('recording_table')
   output$recording_table <- DT::renderDataTable({
     # todo: create proxy to stop having to reinitialise datatable 
+    print("edit")
     req(input$fileRecordings)
-    recording_df_filtered = recording_data$recording_master_df %>%
-      filter(
-        X.measured_call_datetime. >= as.POSIXct(input$selected_scope_time_range[1], format = "%Y-%m-%d %H:%M:%S"),
-        X.measured_call_datetime. <= as.POSIXct(input$selected_scope_time_range[2], format = "%Y-%m-%d %H:%M:%S")
-      )
+    
+    # NOTE: might remove this as it's causing performance issues. Might not be good to use dplyr as well
+    # recording_df_filtered = recording_data$recording_master_df$X.measured_call_datetime. %>%
+    #   filter(
+    #     X.measured_call_datetime. >= as.POSIXct(input$selected_scope_time_range[1], format = "%Y-%m-%d %H:%M:%S"),
+    #     X.measured_call_datetime. <= as.POSIXct(input$selected_scope_time_range[2], format = "%Y-%m-%d %H:%M:%S")
+    #   )
+    
+    recording_df_filtered <- recording_data$recording_master_df[
+      recording_data$recording_master_df$X.measured_call_datetime. >= input$selected_scope_time_range[1] &
+        recording_data$recording_master_df$X.measured_call_datetime. <= input$selected_scope_time_range[2],
+    ]
+    
     recording_data$recording_temp_df = recording_df_filtered
     
     datatable(recording_df_filtered, editable = list(target = 'cell', disable = list(columns = c(1, 2, 3, 4, 5, 6, 7, 8))), rownames = FALSE,  extensions = 'Buttons', options = list(dom = 'Bfrtip', buttons = I('colvis'))) %>%
@@ -249,8 +258,8 @@ server <- function(input, output, session) {
   recording_data <- reactiveValues(
     recording_temp_df = NULL,
     recording_master_df = NULL,
-    recording_first_call_datetime = NULL,
-    recording_last_call_datetime = NULL
+    recording_first_call_datetime = as.POSIXct("2023-01-01 00:00:00"),
+    recording_last_call_datetime = as.POSIXct("2023-01-01 00:00:00")
   )
   
   observeEvent(input$fileRecordings, {
