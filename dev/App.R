@@ -5,37 +5,15 @@ library(leaflet)
 library(leaflet.extras)
 library(leaflet.extras2)
 
+# coordinates
+library(geosphere)
+
 # dates and data manipulation
 library(dplyr)
 library(lubridate)
 
 # datatables
 library(DT)
-
-# calculate coordinates from an arc
-calculate_arrow_head_coordinates <- function(lat, lng, bearing, radius) {
-  # Radius of the Earth in meters
-  earth_radius <- 6371000  # approximate value for Earth
-  
-  # Convert bearing from radians to degrees
-  bearing_deg <- bearing * 180 / pi
-  
-  # Calculate new latitude and longitude
-  lat_rad <- lat * pi / 180
-  lng_rad <- lng * pi / 180
-  
-  new_lat_rad <- asin(sin(lat_rad) * cos(radius / earth_radius) +
-                        cos(lat_rad) * sin(radius / earth_radius) * cos(bearing))
-  
-  new_lng_rad <- lng_rad + atan2(sin(bearing) * sin(radius / earth_radius) * cos(lat_rad),
-                                 cos(radius / earth_radius) - sin(lat_rad) * sin(new_lat_rad))
-  
-  # Convert new latitude and longitude to degrees
-  new_lat <- new_lat_rad * 180 / pi
-  new_lng <- new_lng_rad * 180 / pi
-  
-  return(c(new_lng, new_lat))
-}
 
 ui <- fluidPage(
   titlePanel("Survey of Acoustic Spatial-Recapture Data"),
@@ -180,7 +158,9 @@ server <- function(input, output, session) {
     edited_recording_ID <- recording_data$recording_temp_df[edit$row, edit$col+2]
     recording_data$recording_master_df[recording_data$recording_master_df[,2] == edited_recording_ID, 1] <- edit$value
   })
+  ###
   
+  ### set new animal ID
   observeEvent(input$set_new_animal_ID, {
     selected_rows = input$recording_table_rows_selected
     selected_recording_ID <- recording_data$recording_temp_df[selected_rows, 2]
@@ -196,6 +176,7 @@ server <- function(input, output, session) {
     print(selected_rows)
     recording_data$recording_master_df[selected_rows, 1] <- max_animal_ID + 1
   })
+  ###
   
   ### testing purposes
   observeEvent(input$test, {
@@ -232,7 +213,7 @@ server <- function(input, output, session) {
       selected_bearings <- recording_data$recording_master_df$X.measured_bearing.[selected_rows[i]]
       
       # calculate new arrowhead coordinates from mic coordinates and measured detection bearing
-      arrow_head_coordinates <- calculate_arrow_head_coordinates(selected_mic_lat, selected_mic_lng, selected_bearings, radius)
+      arrow_head_coordinates <- geosphere::destPoint(p = c(selected_mic_lng, selected_mic_lat), b = selected_bearings * (180/pi), d = radius)
       arrow_coordinates <- rbind(selected_mic_coordinates, arrow_head_coordinates)
       rownames(arrow_coordinates) = NULL
       colnames(arrow_coordinates) = c("lng", "lat")
