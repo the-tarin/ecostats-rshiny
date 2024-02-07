@@ -113,7 +113,7 @@ ui <- fluidPage(
 )
 
 server <- function(input, output, session) {
-  ### change silderInput date based on select date output
+  ### sliders for filtering recordings by datetime
   # observeEvent(input$selected_date, {
   #   updateSliderInput(
   #     session,
@@ -140,7 +140,17 @@ server <- function(input, output, session) {
                 as.POSIXct(paste("2023-01-01", time_end, tz = "GMT")))
     )
   })
-  ###
+  
+  observeEvent(input$set_scope_time_range, {
+    ""
+    updateSliderInput(
+      session,
+      "selected_scope_time_range",
+      min = input$selected_time_range[1],
+      max = input$selected_time_range[2],
+      value = c(input$selected_time_range[1], input$selected_time_range[2])
+    )
+  })
   
   ### update select date input to earliest date in the recording data
   # todo: complete this to automatically extract the date. Not high priority
@@ -152,6 +162,7 @@ server <- function(input, output, session) {
   #     # value = as.POSIXct(format(recording_df$X.measured_call_datetime[1], "%Y-%m-%d"), tz <- "GMT")
   #   )
   # })
+  ###
   
   ### add mic markers when mic_df is uploaded
   observeEvent(input$fileMic, {
@@ -177,8 +188,8 @@ server <- function(input, output, session) {
     req(input$fileRecordings)
     recording_df_filtered = recording_data$recording_master_df %>%
       filter(
-        X.measured_call_datetime. >= as.POSIXct(input$selected_time_range[1], format = "%Y-%m-%d %H:%M:%S"),
-        X.measured_call_datetime. <= as.POSIXct(input$selected_time_range[2], format = "%Y-%m-%d %H:%M:%S")
+        X.measured_call_datetime. >= as.POSIXct(input$selected_scope_time_range[1], format = "%Y-%m-%d %H:%M:%S"),
+        X.measured_call_datetime. <= as.POSIXct(input$selected_scope_time_range[2], format = "%Y-%m-%d %H:%M:%S")
       )
     recording_data$recording_temp_df = recording_df_filtered
     
@@ -302,9 +313,6 @@ server <- function(input, output, session) {
     
     recording_data$recording_first_call_datetime <- recording_master_df$X.measured_call_datetime[1]
     recording_data$recording_last_call_datetime <- recording_master_df$X.measured_call_datetime[length(recording_master_df$X.measured_call_datetime)]
-    
-    print(recording_data$recording_first_call_datetime)
-    print(recording_data$recording_last_call_datetime)
     
     animal_ID <- rep(0, nrow(recording_master_df))
     recording_master_df <- cbind(animal_ID, recording_master_df)
