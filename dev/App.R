@@ -18,7 +18,7 @@ library(DT)
 ui <- fluidPage(
   titlePanel("Survey of Acoustic Spatial-Recapture Data"),
   ### map
-  leafletOutput("map", width = "100%", height = 800),
+  leaflet::leafletOutput("map", width = "100%", height = 800),
   ###
   sidebarLayout(
     sidebarPanel(
@@ -155,8 +155,9 @@ server <- function(input, output, session) {
     
     recording_data$recording_temp_df = recording_df_filtered
     
-    datatable(recording_df_filtered, editable = list(target = 'cell', disable = list(columns = c(1, 2, 3, 4, 5, 6, 7, 8))), rownames = FALSE,  extensions = 'Buttons', options = list(dom = 'Bfrtip', buttons = I('colvis'))) %>%
-      formatRound(columns=c('X.ground_truth_bearing.', 'X.measured_bearing.'), digits=3)
+    
+    
+    datatable(recording_df_filtered, editable = list(target = 'cell', disable = list(columns = c(1, 2, 3, 4, 5, 6, 7, 8))), rownames = FALSE,  extensions = 'Buttons', options = list(dom = 'Bfrtip', buttons = I('colvis')))
   })
   ###
   
@@ -296,8 +297,8 @@ server <- function(input, output, session) {
   ###
   
   ### map
-  output$map <- renderLeaflet({
-    leaflet() %>%
+  output$map <- leaflet::renderLeaflet({
+    leaflet::leaflet() %>%
       addProviderTiles(providers$Esri.WorldImagery,
                        options = providerTileOptions(noWrap = TRUE)
       ) %>%
