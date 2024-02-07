@@ -166,15 +166,12 @@ server <- function(input, output, session) {
     selected_recording_ID <- recording_data$recording_temp_df[selected_rows, 2]
     selected_recording_ID <- as.integer(selected_recording_ID)
     
-    print(selected_recording_ID)
-    
-    # todo: issues with not being able to set animal ID. Probably due to some timing issue.
-    # generate and set new animal ID
     max_animal_ID <- max(recording_data$recording_master_df[,1])
-    print(recording_data$recording_master_df[, 2])
-    selected_rows <- which(recording_data$recording_master_df[, 2] == selected_recording_ID)
-    print(selected_rows)
-    recording_data$recording_master_df[selected_rows, 1] <- max_animal_ID + 1
+    
+    for (i in 1:length(selected_recording_ID)) {
+      selected_row <- which(recording_data$recording_master_df[, 2] == selected_recording_ID[i])
+      recording_data$recording_master_df[selected_row, 1] <- max_animal_ID + 1
+    }
   })
   ###
   
