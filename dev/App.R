@@ -76,7 +76,7 @@ ui <- fluidPage(
         step = 60
       ),
       
-      actionButton("set_scope_time_range", "Set Scope Range"),
+      # actionButton("set_scope_time_range", "Set Scope Range"),
       
       sliderInput(
         "selected_scope_time_range",
@@ -85,20 +85,7 @@ ui <- fluidPage(
         max = as.POSIXct("2023-01-01 23:59:59"),
         value = c(as.POSIXct("2023-01-01 08:00:00"), as.POSIXct("2023-01-01 17:00:00")),
         step = 60
-      ),
-      
-      # timeInput("selected_start_time", label = "Select Start Time:"),
-      # timeInput("selected_end_time", label = "Select End Time:"),
-      
-      # sliderInput(
-      #   "selected_time_range_minute",
-      #   "Select Time Range",
-      #   min = as.POSIXct("1970-01-01 00:00:00"),
-      #   max = as.POSIXct("1970-01-01 23:59:59"),
-      #   value = c(as.POSIXct("1970-01-01 08:00:00"), as.POSIXct("1970-01-01 17:00:00")),
-      #   step = 60,
-      #   timeFormat = "%H:%M"
-      # ),
+      )
     ),
     
     ### Main panel for displaying outputs
@@ -141,8 +128,7 @@ server <- function(input, output, session) {
     )
   })
   
-  observeEvent(input$set_scope_time_range, {
-    ""
+  observeEvent(input$selected_time_range, {
     updateSliderInput(
       session,
       "selected_scope_time_range",
@@ -151,17 +137,6 @@ server <- function(input, output, session) {
       value = c(input$selected_time_range[1], input$selected_time_range[2])
     )
   })
-  
-  ### update select date input to earliest date in the recording data
-  # todo: complete this to automatically extract the date. Not high priority
-  # observeEvent(input$fileRecordings, {
-  #   updateDateInput(
-  #     session,
-  #     "selected_date",
-  #     value = as.POSIXct("2023-01-01", tz = "GMT")
-  #     # value = as.POSIXct(format(recording_df$X.measured_call_datetime[1], "%Y-%m-%d"), tz <- "GMT")
-  #   )
-  # })
   ###
   
   ### add mic markers when mic_df is uploaded
