@@ -69,25 +69,36 @@ ui <- fluidPage(
       
       sliderInput(
         "selected_time_range",
-        "Select Time Range",
-        min = as.POSIXct("1970-01-01 00:00:00"),
-        max = as.POSIXct("1970-01-01 23:59:59"),
-        value = c(as.POSIXct("1970-01-01 08:00:00"), as.POSIXct("1970-01-01 17:00:00")),
+        "Time Range from Data",
+        min = as.POSIXct("2023-01-01 00:00:00"),
+        max = as.POSIXct("2023-01-01 23:59:59"),
+        value = c(as.POSIXct("2023-01-01 08:00:00"), as.POSIXct("2023-01-01 17:00:00")),
         step = 60
       ),
       
-      timeInput("selected_start_time", label = "Select Start Time:"),
-      timeInput("selected_end_time", label = "Select End Time:"),
+      actionButton("set_scope_time_range", "Set Scope Range"),
       
       sliderInput(
-        "selected_time_range_minute",
-        "Select Time Range",
-        min = as.POSIXct("1970-01-01 00:00:00"),
-        max = as.POSIXct("1970-01-01 23:59:59"),
-        value = c(as.POSIXct("1970-01-01 08:00:00"), as.POSIXct("1970-01-01 17:00:00")),
-        step = 60,
-        timeFormat = "%H:%M"
+        "selected_scope_time_range",
+        "Scope Time Range",
+        min = as.POSIXct("2023-01-01 00:00:00"),
+        max = as.POSIXct("2023-01-01 23:59:59"),
+        value = c(as.POSIXct("2023-01-01 08:00:00"), as.POSIXct("2023-01-01 17:00:00")),
+        step = 60
       ),
+      
+      # timeInput("selected_start_time", label = "Select Start Time:"),
+      # timeInput("selected_end_time", label = "Select End Time:"),
+      
+      # sliderInput(
+      #   "selected_time_range_minute",
+      #   "Select Time Range",
+      #   min = as.POSIXct("1970-01-01 00:00:00"),
+      #   max = as.POSIXct("1970-01-01 23:59:59"),
+      #   value = c(as.POSIXct("1970-01-01 08:00:00"), as.POSIXct("1970-01-01 17:00:00")),
+      #   step = 60,
+      #   timeFormat = "%H:%M"
+      # ),
     ),
     
     ### Main panel for displaying outputs
@@ -114,11 +125,12 @@ server <- function(input, output, session) {
   #   )
   # })
   
-  observeEvent(recording_data$recording_first_call_datetime, ignoreNULL = TRUE, {
+  observeEvent(recording_data$recording_first_call_datetime, {
     date_start <- substr(recording_data$recording_first_call_datetime, start = 0, stop = 10)
     time_start <- substr(recording_data$recording_first_call_datetime, start = 12, stop = 20)
     date_end <- substr(recording_data$recording_last_call_datetime, start = 0, stop = 10)
     time_end <- substr(recording_data$recording_last_call_datetime, start = 12, stop = 20)
+    # todo: add date_start/end without any issues. Currently doesn't work.
     updateSliderInput(
       session,
       "selected_time_range",
