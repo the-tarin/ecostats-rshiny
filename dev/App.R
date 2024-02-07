@@ -73,8 +73,7 @@ ui <- fluidPage(
         min = as.POSIXct("1970-01-01 00:00:00"),
         max = as.POSIXct("1970-01-01 23:59:59"),
         value = c(as.POSIXct("1970-01-01 08:00:00"), as.POSIXct("1970-01-01 17:00:00")),
-        step = 60,
-        timeFormat = "%H:%M"
+        step = 60
       ),
       
       timeInput("selected_start_time", label = "Select Start Time:"),
@@ -274,8 +273,8 @@ server <- function(input, output, session) {
   recording_data <- reactiveValues(
     recording_temp_df = NULL,
     recording_master_df = NULL,
-    recording_first_call_datetime = as.POSIXct("1970-01-01 00:00:00"),
-    recording_last_call_datetime = as.POSIXct("1970-01-01 00:00:00")
+    recording_first_call_datetime = NULL,
+    recording_last_call_datetime = NULL
   )
   
   observeEvent(input$fileRecordings, {
