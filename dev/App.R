@@ -19,8 +19,25 @@ library(DT)
 
 ui <- fluidPage(
   titlePanel("Survey of Acoustic Spatial-Recapture Data"),
-  ### map
-  leaflet::leafletOutput("map", width = "100%", height = 800),
+  # Split the app into two halves vertically
+  fluidRow(
+    # Left half
+    column(width = 6,
+           # Add UI elements for the left half
+           # For example:
+           ### map
+           leaflet::leafletOutput("map", width = "100%", height = 800)
+    ),
+    
+    # Right half
+    column(width = 6,
+           # Add UI elements for the right half
+           # For example:
+           DT::dataTableOutput("recording_table"),
+           actionButton("set_new_animal_ID", "Set New Animal ID"),
+           downloadButton("download_button", "Download Recordings"),
+    )
+  ),
   ###
   sidebarLayout(
     sidebarPanel(
@@ -58,9 +75,6 @@ ui <- fluidPage(
         step = 1
       ),
       
-      # not sure whether we need this, or we could just automatically update the scope
-      # actionButton("set_scope_time_range", "Set Scope Range"),
-      
       sliderInput(
         "selected_scope_time_range",
         "Scope Time Range",
@@ -73,10 +87,6 @@ ui <- fluidPage(
     
     ### Main panel for displaying outputs
     mainPanel(
-      DT::dataTableOutput("recording_table"),
-      actionButton("test", "Test"),
-      actionButton("set_new_animal_ID", "Set New Animal ID"),
-      downloadButton("download_button", "Download Recordings"),
     )
     ###
   )
@@ -208,12 +218,6 @@ server <- function(input, output, session) {
       selected_row <- which(recording_data$recording_master_df[, 2] == selected_recording_ID[i])
       recording_data$recording_master_df[selected_row, 1] <- max_animal_ID + 1
     }
-  })
-  ###
-  
-  ### testing purposes
-  observeEvent(input$test, {
-    print(input$recording_table_rows_selected)
   })
   ###
   
