@@ -222,7 +222,11 @@ server <- function(input, output, session) {
   ###
   
   ### adding arrows to map
-  arrows <- reactiveValues(coordinates = array(), recording_ID = array())
+  arrows <- reactiveValues(
+    coordinates = array(), 
+    recording_ID = array(),
+    animal_ID = array()
+  )
   
   observeEvent(input$recording_table_rows_selected, ignoreNULL = FALSE, {
     selected_rows = input$recording_table_rows_selected
@@ -257,6 +261,7 @@ server <- function(input, output, session) {
     # arrow_coordinates_total_lines <- SpatialLines(arrow_coordinates_total)
     arrows$coordinates <- arrow_coordinates_total
     arrows$recording_ID <- recording_data$recording_master_df$X.recording_ID[selected_rows]
+    arrows$animal_ID <- recording_data$recording_master_df$animal_ID[selected_rows]
   })
   
   # update map with bearing directions for selected recordings
@@ -266,7 +271,7 @@ server <- function(input, output, session) {
     # prevents plotting arrows on declaration
     if (!any(is.na(arrows$coordinates))) {
       for (i in 1:dim(arrows$coordinates)[3]) {
-        leafletProxy("map") %>% addArrowhead(data = arrows$coordinates[,,i], group = "all", layerId = paste0("arrow_", i), label = paste0("Recording ID: ", arrows$recording_ID[i]), color = "red", opacity = 50, 
+        leafletProxy("map") %>% addArrowhead(data = arrows$coordinates[,,i], group = "all", layerId = paste0("arrow_", i), label = paste0("Recording ID: ", arrows$recording_ID[i], ", Animal ID: ", arrows$animal_ID[i]), color = "red", opacity = 50, 
                                              options = arrowheadOptions(yawn = 40, fill = FALSE))
       }
     }
