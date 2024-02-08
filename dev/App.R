@@ -46,8 +46,8 @@ ui <- fluidPage(
       ### filters
       # dateInput(inputId = "selected_date", label = "Select Date"),
       
-      timeInput(inputId = "selected_time_start", label = "Time Range of Data Start"),
-      timeInput(inputId = "selected_time_end", label = "Time Range of Data End"),
+      # timeInput(inputId = "selected_time_start", label = "Time Range of Data Start"),
+      # timeInput(inputId = "selected_time_end", label = "Time Range of Data End"),
       
       sliderInput(
         "selected_time_range",
@@ -105,17 +105,33 @@ server <- function(input, output, session) {
       value = c(as.POSIXct(recording_data$recording_first_call_datetime, format = "%Y-%m-%d %H:%M:%S"),
                 as.POSIXct(recording_data$recording_last_call_datetime, format = "%Y-%m-%d %H:%M:%S"))
     )
-    updateTimeInput(
-      session,
-      "selected_time_start",
-      value = as.POSIXct(recording_data$recording_first_call_datetime, format = "%Y-%m-%d %H:%M:%S")
-    )
-    updateTimeInput(
-      session,
-      "selected_time_end",
-      value = as.POSIXct(recording_data$recording_last_call_datetime, format = "%Y-%m-%d %H:%M:%S")
-    )
+    # updateTimeInput(
+    #   session,
+    #   "selected_time_start",
+    #   value = as.POSIXct(recording_data$recording_first_call_datetime, format = "%Y-%m-%d %H:%M:%S")
+    # )
+    # updateTimeInput(
+    #   session,
+    #   "selected_time_end",
+    #   value = as.POSIXct(recording_data$recording_last_call_datetime, format = "%Y-%m-%d %H:%M:%S")
+    # )
   })
+  
+  # observeEvent(input$selected_time_start, {
+  #   updateSliderInput(
+  #     session,
+  #     "selected_time_range",
+  #     min = as.POSIXct(input$selected_time_start, format = "%Y-%m-%d %H:%M:%S")
+  #   )
+  # })
+  # 
+  # observeEvent(input$selected_time_end, {
+  #   updateSliderInput(
+  #     session,
+  #     "selected_time_range",
+  #     max = as.POSIXct(input$selected_time_end, format = "%Y-%m-%d %H:%M:%S")
+  #   )
+  # })
   
   observeEvent(input$selected_time_range, {
     updateSliderInput(
@@ -206,7 +222,7 @@ server <- function(input, output, session) {
   ###
   
   ### adding arrows to map
-  arrows <- reactiveValues(coordinates = array())
+  arrows <- reactiveValues(coordinates = array(), recording_ID = array())
   
   observeEvent(input$recording_table_rows_selected, ignoreNULL = FALSE, {
     selected_rows = input$recording_table_rows_selected
@@ -239,7 +255,8 @@ server <- function(input, output, session) {
       # arrow_coordinates_total[[i]] <- Line(arrow_coordinates)
     }
     # arrow_coordinates_total_lines <- SpatialLines(arrow_coordinates_total)
-    arrows$coordinates = arrow_coordinates_total
+    arrows$coordinates <- arrow_coordinates_total
+    arrows$recording_ID <- recording_data$recording_master_df$X.recording_ID[selected_rows]
   })
   
   # update map with bearing directions for selected recordings
@@ -249,7 +266,7 @@ server <- function(input, output, session) {
     # prevents plotting arrows on declaration
     if (!any(is.na(arrows$coordinates))) {
       for (i in 1:dim(arrows$coordinates)[3]) {
-        leafletProxy("map") %>% addArrowhead(data = arrows$coordinates[,,i], group = "all", layerId = paste0("arrow_", i), color = "red", opacity = 50, 
+        leafletProxy("map") %>% addArrowhead(data = arrows$coordinates[,,i], group = "all", layerId = paste0("arrow_", i), label = paste0("Recording ID: ", arrows$recording_ID[i]), color = "red", opacity = 50, 
                                              options = arrowheadOptions(yawn = 40, fill = FALSE))
       }
     }
