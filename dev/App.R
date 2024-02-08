@@ -97,28 +97,23 @@ server <- function(input, output, session) {
   
   observeEvent(recording_data$recording_first_call_datetime, {
     req(input$fileRecordings)
-    date_start <- substr(recording_data$recording_first_call_datetime, start = 0, stop = 10)
-    time_start <- substr(recording_data$recording_first_call_datetime, start = 12, stop = 20)
-    date_end <- substr(recording_data$recording_last_call_datetime, start = 0, stop = 10)
-    time_end <- substr(recording_data$recording_last_call_datetime, start = 12, stop = 20)
-    # todo: add date_start/end without any issues. Currently doesn't work.
     updateSliderInput(
       session,
       "selected_time_range",
-      min = as.POSIXct(paste("2023-01-01", time_start, tz = "GMT")),
-      max = as.POSIXct(paste("2023-01-01", time_end, tz = "GMT")),
-      value = c(as.POSIXct(paste("2023-01-01", time_start, tz = "GMT")),
-                as.POSIXct(paste("2023-01-01", time_end, tz = "GMT")))
+      min = as.POSIXct(recording_data$recording_first_call_datetime, format = "%Y-%m-%d %H:%M:%S"),
+      max = as.POSIXct(recording_data$recording_last_call_datetime, format = "%Y-%m-%d %H:%M:%S"),
+      value = c(as.POSIXct(recording_data$recording_first_call_datetime, format = "%Y-%m-%d %H:%M:%S"),
+                as.POSIXct(recording_data$recording_last_call_datetime, format = "%Y-%m-%d %H:%M:%S"))
     )
     updateTimeInput(
       session,
       "selected_time_start",
-      value = Sys.time()
+      value = as.POSIXct(recording_data$recording_first_call_datetime, format = "%Y-%m-%d %H:%M:%S")
     )
     updateTimeInput(
       session,
       "selected_time_end",
-      value = Sys.time()
+      value = as.POSIXct(recording_data$recording_last_call_datetime, format = "%Y-%m-%d %H:%M:%S")
     )
   })
   
