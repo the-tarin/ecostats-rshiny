@@ -1,5 +1,8 @@
 library(shiny)
 
+# time input
+library(shinyTime)
+
 # maps
 library(leaflet)
 library(leaflet.extras)
@@ -9,7 +12,6 @@ library(leaflet.extras2)
 library(geosphere)
 
 # dates and data manipulation
-library(dplyr)
 library(lubridate)
 
 # datatables
@@ -43,6 +45,9 @@ ui <- fluidPage(
       ###
       ### filters
       # dateInput(inputId = "selected_date", label = "Select Date"),
+      
+      timeInput(inputId = "selected_time_start", label = "Time Range of Data Start"),
+      timeInput(inputId = "selected_time_end", label = "Time Range of Data End"),
       
       sliderInput(
         "selected_time_range",
@@ -91,6 +96,7 @@ server <- function(input, output, session) {
   # })
   
   observeEvent(recording_data$recording_first_call_datetime, {
+    req(input$fileRecordings)
     date_start <- substr(recording_data$recording_first_call_datetime, start = 0, stop = 10)
     time_start <- substr(recording_data$recording_first_call_datetime, start = 12, stop = 20)
     date_end <- substr(recording_data$recording_last_call_datetime, start = 0, stop = 10)
@@ -103,6 +109,16 @@ server <- function(input, output, session) {
       max = as.POSIXct(paste("2023-01-01", time_end, tz = "GMT")),
       value = c(as.POSIXct(paste("2023-01-01", time_start, tz = "GMT")),
                 as.POSIXct(paste("2023-01-01", time_end, tz = "GMT")))
+    )
+    updateTimeInput(
+      session,
+      "selected_time_start",
+      value = Sys.time()
+    )
+    updateTimeInput(
+      session,
+      "selected_time_end",
+      value = Sys.time()
     )
   })
   
@@ -138,8 +154,8 @@ server <- function(input, output, session) {
   proxy <- DT::dataTableProxy('recording_table')
   output$recording_table <- DT::renderDataTable({
     # todo: create proxy to stop having to reinitialise datatable 
-    print("edit")
     req(input$fileRecordings)
+    print("edit")
     
     # NOTE: might remove this as it's causing performance issues. Might not be good to use dplyr as well
     # recording_df_filtered = recording_data$recording_master_df$X.measured_call_datetime. %>%
@@ -154,7 +170,6 @@ server <- function(input, output, session) {
     ]
     
     recording_data$recording_temp_df = recording_df_filtered
-    
     
     
     datatable(recording_df_filtered, editable = list(target = 'cell', disable = list(columns = c(1, 2, 3, 4, 5, 6, 7, 8))), rownames = FALSE,  extensions = 'Buttons', options = list(dom = 'Bfrtip', buttons = I('colvis')))
