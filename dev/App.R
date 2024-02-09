@@ -222,7 +222,16 @@ server <- function(input, output, session) {
   ###
   
   ### download recordings
-  # todo: ...
+  output$download_button <- downloadHandler(
+    filename = function() {
+      paste("data-", format(Sys.Date(), "%Y-%m-%d"), ".csv", sep="")
+    },
+    content = function(file) {
+      str(recording_data$recording_master_df)
+      write.csv(recording_data$recording_master_df, file, row.names = FALSE)
+    },
+    contentType = "text/csv"
+  )
   ###
   
   ### adding arrows to map
@@ -293,8 +302,8 @@ server <- function(input, output, session) {
   })
   
   recording_data <- reactiveValues(
-    recording_temp_df = NULL,
-    recording_master_df = NULL,
+    recording_temp_df = data.frame(),
+    recording_master_df = data.frame(),
     recording_first_call_datetime = as.POSIXct("2023-01-01 00:00:00"),
     recording_last_call_datetime = as.POSIXct("2023-01-01 00:00:00")
   )
