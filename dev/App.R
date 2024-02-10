@@ -33,7 +33,17 @@ ui <- fluidPage(
     column(width = 6,
            # Add UI elements for the right half
            # For example:
-           DT::dataTableOutput("recording_table"),
+           tabsetPanel(id = "tabs",
+                       tabPanel("Recordings",
+                                DT::dataTableOutput("recording_table")
+                       ),
+                       tabPanel("Calls",
+                                # DT::dataTableOutput("recording_table")
+                       ),
+                       tabPanel("Animals",
+                                # DT::dataTableOutput("recording_table")
+                       ),
+           ),
            actionButton("set_new_animal_ID", "Set New Animal ID"),
            downloadButton("download_button", "Download Recordings"),
     )
