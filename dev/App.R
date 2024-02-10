@@ -199,6 +199,13 @@ server <- function(input, output, session) {
     datatable(recording_df_filtered, editable = list(target = 'cell', disable = list(columns = c(1, 2, 3, 4, 5, 6, 7, 8))), rownames = FALSE,  extensions = 'Buttons', options = list(dom = 'Bfrtip', buttons = I('colvis')))
   })
   ###
+  
+  ### calls logic
+  call_data <- reactiveValues(
+    call_temp_df = data.frame(),
+    call_master_df = data.frame(),
+  )
+  ###
 
   ### calls datatable
   call_table_proxy <- DT::dataTableProxy('call_table')
@@ -207,7 +214,7 @@ server <- function(input, output, session) {
     req(input$fileRecordings)
     print("update calls table")
     
-    datatable(recording_df_filtered, editable = list(target = 'cell', disable = list(columns = c(1, 2, 3, 4, 5, 6, 7, 8))), rownames = FALSE,  extensions = 'Buttons', options = list(dom = 'Bfrtip', buttons = I('colvis')))
+    # datatable(recording_df_filtered, editable = list(target = 'cell', disable = list(columns = c(1, 2, 3, 4, 5, 6, 7, 8))), rownames = FALSE,  extensions = 'Buttons', options = list(dom = 'Bfrtip', buttons = I('colvis')))
   })
   ###
   
@@ -217,6 +224,8 @@ server <- function(input, output, session) {
     # find the recording ID which has been edited from datatable (temp dataframe) and save changes to master dataframe
     edited_recording_ID <- recording_data$recording_temp_df[edit$row, edit$col+2]
     recording_data$recording_master_df[recording_data$recording_master_df[,2] == edited_recording_ID, 1] <- edit$value
+    
+    ### todo: logic to export data to calls datatable
   })
   ###
   
@@ -232,6 +241,8 @@ server <- function(input, output, session) {
       selected_row <- which(recording_data$recording_master_df[, 2] == selected_recording_ID[i])
       recording_data$recording_master_df[selected_row, 1] <- max_animal_ID + 1
     }
+    
+    ### todo: logic to export data to calls datatable
   })
   ###
   
@@ -312,6 +323,7 @@ server <- function(input, output, session) {
                        header = TRUE,
                        sep = ",",
                        quote = "")
+    ### todo: convert UTM to lat / lon
     return(mic_df)
   })
   
