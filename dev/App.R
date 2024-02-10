@@ -38,7 +38,7 @@ ui <- fluidPage(
                                 DT::dataTableOutput("recording_table")
                        ),
                        tabPanel("Calls",
-                                # DT::dataTableOutput("recording_table")
+                                DT::dataTableOutput("call_table")
                        ),
                        tabPanel("Animals",
                                 # DT::dataTableOutput("recording_table")
@@ -181,20 +181,13 @@ server <- function(input, output, session) {
   })
   ###
   
-  ### main recordings datatable
-  proxy <- DT::dataTableProxy('recording_table')
+  ### recordings datatable
+  recording_table_proxy <- DT::dataTableProxy('recording_table')
   output$recording_table <- DT::renderDataTable({
     # todo: create proxy to stop having to reinitialise datatable 
     req(input$fileRecordings)
-    print("edit")
-    
-    # NOTE: might remove this as it's causing performance issues. Might not be good to use dplyr as well
-    # recording_df_filtered = recording_data$recording_master_df$X.measured_call_datetime. %>%
-    #   filter(
-    #     X.measured_call_datetime. >= as.POSIXct(input$selected_scope_time_range[1], format = "%Y-%m-%d %H:%M:%S"),
-    #     X.measured_call_datetime. <= as.POSIXct(input$selected_scope_time_range[2], format = "%Y-%m-%d %H:%M:%S")
-    #   )
-    
+    print("update recordings table")
+
     recording_df_filtered <- recording_data$recording_master_df[
       recording_data$recording_master_df$X.measured_call_datetime. >= input$selected_scope_time_range[1] &
         recording_data$recording_master_df$X.measured_call_datetime. <= input$selected_scope_time_range[2],
@@ -202,6 +195,17 @@ server <- function(input, output, session) {
     
     recording_data$recording_temp_df = recording_df_filtered
     
+    
+    datatable(recording_df_filtered, editable = list(target = 'cell', disable = list(columns = c(1, 2, 3, 4, 5, 6, 7, 8))), rownames = FALSE,  extensions = 'Buttons', options = list(dom = 'Bfrtip', buttons = I('colvis')))
+  })
+  ###
+
+  ### calls datatable
+  call_table_proxy <- DT::dataTableProxy('call_table')
+  output$call_table <- DT::renderDataTable({
+    # todo: create proxy to stop having to reinitialise datatable 
+    req(input$fileRecordings)
+    print("update calls table")
     
     datatable(recording_df_filtered, editable = list(target = 'cell', disable = list(columns = c(1, 2, 3, 4, 5, 6, 7, 8))), rownames = FALSE,  extensions = 'Buttons', options = list(dom = 'Bfrtip', buttons = I('colvis')))
   })
