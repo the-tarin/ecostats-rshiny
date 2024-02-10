@@ -44,7 +44,7 @@ ui <- fluidPage(
                                 # DT::dataTableOutput("recording_table")
                        ),
            ),
-           actionButton("set_new_animal_ID", "Set New Animal ID"),
+           actionButton("set_new_call_ID", "Set New Call ID"),
            downloadButton("download_button", "Download Recordings"),
     )
   ),
@@ -184,7 +184,7 @@ server <- function(input, output, session) {
   ### recordings datatable
   recording_table_proxy <- DT::dataTableProxy('recording_table')
   output$recording_table <- DT::renderDataTable({
-    # todo: create proxy to stop having to reinitialise datatable 
+    # todo: create proxy logic to stop having to reinitialise datatable 
     req(input$fileRecordings)
     print("update recordings table")
 
@@ -210,11 +210,13 @@ server <- function(input, output, session) {
   ### calls datatable
   call_table_proxy <- DT::dataTableProxy('call_table')
   output$call_table <- DT::renderDataTable({
-    # todo: create proxy to stop having to reinitialise datatable 
+    # todo: create proxy logic to stop having to reinitialise datatable 
     req(input$fileRecordings)
     print("update calls table")
     
-    # datatable(recording_df_filtered, editable = list(target = 'cell', disable = list(columns = c(1, 2, 3, 4, 5, 6, 7, 8))), rownames = FALSE,  extensions = 'Buttons', options = list(dom = 'Bfrtip', buttons = I('colvis')))
+    call_data$call_temp_df = call_data$call_master_df
+    
+    datatable(call_data$call_temp_df, editable = list(target = 'cell', disable = list(columns = c(1, 2))), rownames = FALSE,  extensions = 'Buttons', options = list(dom = 'Bfrtip', buttons = I('colvis')))
   })
   ###
   
@@ -229,20 +231,23 @@ server <- function(input, output, session) {
   })
   ###
   
-  ### set new animal ID
-  observeEvent(input$set_new_animal_ID, {
+  ### set new call ID
+  observeEvent(input$set_new_call_ID, {
     selected_rows = input$recording_table_rows_selected
     selected_recording_ID <- recording_data$recording_temp_df[selected_rows, 2]
     selected_recording_ID <- as.integer(selected_recording_ID)
     
-    max_animal_ID <- max(recording_data$recording_master_df[,1])
+    new_call_ID <- max(recording_data$recording_master_df[,1]) + 1
     
     for (i in 1:length(selected_recording_ID)) {
       selected_row <- which(recording_data$recording_master_df[, 2] == selected_recording_ID[i])
-      recording_data$recording_master_df[selected_row, 1] <- max_animal_ID + 1
+      recording_data$recording_master_df[selected_row, 1] <- new_call_ID
     }
     
     ### todo: logic to export data to calls datatable
+    # average_measured_call_datetime <- 
+    new_call <- cbind(new_call_ID, selected_recording_ID, average_measured_call_datetime)
+    call_data$call_master_df <- rbind(call_data$call_master_df, new_call)
   })
   ###
   
@@ -263,7 +268,7 @@ server <- function(input, output, session) {
   arrows <- reactiveValues(
     coordinates = array(), 
     recording_ID = array(),
-    animal_ID = array()
+    call_ID = array()
   )
   
   observeEvent(input$recording_table_rows_selected, ignoreNULL = FALSE, {
@@ -299,7 +304,7 @@ server <- function(input, output, session) {
     # arrow_coordinates_total_lines <- SpatialLines(arrow_coordinates_total)
     arrows$coordinates <- arrow_coordinates_total
     arrows$recording_ID <- recording_data$recording_master_df$X.recording_ID[selected_rows]
-    arrows$animal_ID <- recording_data$recording_master_df$animal_ID[selected_rows]
+    arrows$call_ID <- recording_data$recording_master_df$call_ID[selected_rows]
   })
   
   # update map with bearing directions for selected recordings
@@ -309,7 +314,7 @@ server <- function(input, output, session) {
     # prevents plotting arrows on declaration
     if (!any(is.na(arrows$coordinates))) {
       for (i in 1:dim(arrows$coordinates)[3]) {
-        leafletProxy("map") %>% addArrowhead(data = arrows$coordinates[,,i], group = "all", layerId = paste0("arrow_", i), label = paste0("Recording ID: ", arrows$recording_ID[i], ", Animal ID: ", arrows$animal_ID[i]), color = "red", opacity = 50, 
+        leafletProxy("map") %>% addArrowhead(data = arrows$coordinates[,,i], group = "all", layerId = paste0("arrow_", i), label = paste0("Recording ID: ", arrows$recording_ID[i], ", Call ID: ", arrows$call_ID[i]), color = "red", opacity = 50, 
                                              options = arrowheadOptions(yawn = 40, fill = FALSE))
       }
     }
@@ -348,8 +353,8 @@ server <- function(input, output, session) {
     recording_data$recording_first_call_datetime <- recording_master_df$X.measured_call_datetime[1]
     recording_data$recording_last_call_datetime <- recording_master_df$X.measured_call_datetime[length(recording_master_df$X.measured_call_datetime)]
     
-    animal_ID <- rep(0, nrow(recording_master_df))
-    recording_master_df <- cbind(animal_ID, recording_master_df)
+    call_ID <- rep(0, nrow(recording_master_df))
+    recording_master_df <- cbind(call_ID, recording_master_df)
     
     recording_master_df$X.recording_ID <- as.integer(recording_master_df$X.recording_ID)
     
