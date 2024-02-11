@@ -35,7 +35,8 @@ ui <- fluidPage(
            # For example:
            tabsetPanel(id = "tabs",
                        tabPanel("Recordings",
-                                DT::dataTableOutput("recording_table")
+                                DT::dataTableOutput("recording_table"),
+                                actionButton("set_new_call_ID", "Set New Call ID")
                        ),
                        tabPanel("Calls",
                                 DT::dataTableOutput("call_table")
@@ -44,7 +45,6 @@ ui <- fluidPage(
                                 # DT::dataTableOutput("recording_table")
                        ),
            ),
-           actionButton("set_new_call_ID", "Set New Call ID"),
            downloadButton("download_button", "Download Recordings"),
     )
   ),
@@ -245,8 +245,7 @@ server <- function(input, output, session) {
     }
     
     ### todo: calculate mean datetime
-    # measured_call_datetime <- recording_data$recording_temp_df[selected_recording_ID[1]]
-    str(selected_recording_ID)
+    # mean_measured_call_datetime <- 
     new_call <- cbind(new_call_ID, paste(selected_recording_ID, collapse = ", "))
     call_data$call_master_df <- rbind(call_data$call_master_df, new_call)
   })
