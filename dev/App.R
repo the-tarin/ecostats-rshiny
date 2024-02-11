@@ -39,7 +39,8 @@ ui <- fluidPage(
                                 actionButton("set_new_call_ID", "Set New Call ID")
                        ),
                        tabPanel("Calls",
-                                DT::dataTableOutput("call_table")
+                                DT::dataTableOutput("call_table"),
+                                actionButton("remove_call", "Remove Call")
                        ),
                        tabPanel("Animals",
                                 # DT::dataTableOutput("recording_table")
@@ -205,6 +206,14 @@ server <- function(input, output, session) {
     call_temp_df = data.frame(),
     call_master_df = data.frame(),
   )
+  
+  # remove calls
+  observeEvent(input$remove_call, {
+    selected_rows <- input$call_table_rows_selected
+    str(selected_rows)
+    call_data$call_master_df <- call_data$call_master_df[-(selected_rows),]
+    ### todo: reset calls_ID value set in the recordings dataframe
+  })
   ###
 
   ### calls datatable
