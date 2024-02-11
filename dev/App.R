@@ -244,9 +244,10 @@ server <- function(input, output, session) {
       recording_data$recording_master_df[selected_row, 1] <- new_call_ID
     }
     
-    ### todo: logic to export data to calls datatable
-    # average_measured_call_datetime <- 
-    new_call <- cbind(new_call_ID, selected_recording_ID, average_measured_call_datetime)
+    ### todo: calculate mean datetime
+    # measured_call_datetime <- recording_data$recording_temp_df[selected_recording_ID[1]]
+    str(selected_recording_ID)
+    new_call <- cbind(new_call_ID, paste(selected_recording_ID, collapse = ", "))
     call_data$call_master_df <- rbind(call_data$call_master_df, new_call)
   })
   ###
