@@ -225,7 +225,7 @@ server <- function(input, output, session) {
     
     call_data$call_temp_df = call_data$call_master_df
     
-    datatable(call_data$call_temp_df, editable = list(target = 'cell', disable = list(columns = c(1, 2))), rownames = FALSE,  extensions = 'Buttons', options = list(dom = 'Bfrtip', buttons = I('colvis')))
+    datatable(call_data$call_temp_df, editable = list(target = 'cell', disable = list(columns = c(0, 1, 2))), rownames = FALSE,  extensions = 'Buttons', options = list(dom = 'Bfrtip', buttons = I('colvis')))
   })
   ###
   
