@@ -40,7 +40,8 @@ ui <- fluidPage(
                        ),
                        tabPanel("Calls",
                                 DT::dataTableOutput("call_table"),
-                                actionButton("remove_call", "Remove Call")
+                                actionButton("remove_call", "Remove Call"),
+                                actionButton("set_new_animal_ID", "Group Call to Animal")
                        ),
                        tabPanel("Animals",
                                 # DT::dataTableOutput("recording_table")
@@ -245,6 +246,26 @@ server <- function(input, output, session) {
     selected_rows = input$recording_table_rows_selected
     selected_recording_ID <- recording_data$recording_temp_df[selected_rows, 2]
     selected_recording_ID <- as.integer(selected_recording_ID)
+    
+    new_call_ID <- max(recording_data$recording_master_df[,1]) + 1
+    
+    for (i in 1:length(selected_recording_ID)) {
+      selected_row <- which(recording_data$recording_master_df[, 2] == selected_recording_ID[i])
+      recording_data$recording_master_df[selected_row, 1] <- new_call_ID
+    }
+    
+    ### todo: calculate mean datetime
+    # mean_measured_call_datetime <- 
+    new_call <- cbind(new_call_ID, paste(selected_recording_ID, collapse = ", "))
+    call_data$call_master_df <- rbind(call_data$call_master_df, new_call)
+  })
+  ###
+  
+  ### set new animal ID
+  observeEvent(input$set_new_animal_ID, {
+    selected_rows = input$call_table_rows_selected
+    selected_call_ID <- call_data$call_master_df[selected_rows, 1]
+    selected_call_ID <- as.integer(selected_call_ID)
     
     new_call_ID <- max(recording_data$recording_master_df[,1]) + 1
     
