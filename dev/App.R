@@ -256,7 +256,8 @@ server <- function(input, output, session) {
     
     ### todo: calculate mean datetime
     # mean_measured_call_datetime <- 
-    new_call <- cbind(new_call_ID, paste(selected_recording_ID, collapse = ", "))
+    animal_ID = 0
+    new_call <- cbind(animal_ID, new_call_ID, paste(selected_recording_ID, collapse = ", "))
     call_data$call_master_df <- rbind(call_data$call_master_df, new_call)
   })
   ###
