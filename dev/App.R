@@ -44,7 +44,7 @@ ui <- fluidPage(
                                 actionButton("set_new_animal_ID", "Group Call to Animal")
                        ),
                        tabPanel("Animals",
-                                # DT::dataTableOutput("recording_table")
+                                DT::dataTableOutput("animal_table")
                        ),
            ),
            downloadButton("download_button", "Download Recordings"),
@@ -215,9 +215,9 @@ server <- function(input, output, session) {
     call_data$call_master_df <- call_data$call_master_df[-(selected_rows),]
     ### todo: reset calls_ID value set in the recordings dataframe
   })
-  ###
+  #
 
-  ### calls datatable
+  # calls datatable
   call_table_proxy <- DT::dataTableProxy('call_table')
   output$call_table <- DT::renderDataTable({
     # todo: create proxy logic to stop having to reinitialise datatable 
@@ -228,57 +228,88 @@ server <- function(input, output, session) {
     
     datatable(call_data$call_temp_df, editable = list(target = 'cell', disable = list(columns = c(0, 1, 2))), rownames = FALSE,  extensions = 'Buttons', options = list(dom = 'Bfrtip', buttons = I('colvis')))
   })
-  ###
+  #
   
-  ### save changes from datatable edits
+  # save changes from datatable edits
   observeEvent(input$recording_table_cell_edit, {
     edit = input$recording_table_cell_edit
     # find the recording ID which has been edited from datatable (temp dataframe) and save changes to master dataframe
-    edited_recording_ID <- recording_data$recording_temp_df[edit$row, edit$col+2]
-    recording_data$recording_master_df[recording_data$recording_master_df[,2] == edited_recording_ID, 1] <- edit$value
+    edited_recording_ID <- recording_data$recording_temp_df[edit$row, edit$col+3]
+    recording_data$recording_master_df[recording_data$recording_master_df[,2] == edited_recording_ID, 2] <- edit$value
     
     ### todo: logic to export data to calls datatable
   })
-  ###
+  #
   
-  ### set new call ID
+  # set new call ID
   observeEvent(input$set_new_call_ID, {
     selected_rows = input$recording_table_rows_selected
-    selected_recording_ID <- recording_data$recording_temp_df[selected_rows, 2]
+    selected_recording_ID <- recording_data$recording_temp_df[selected_rows, 3]
     selected_recording_ID <- as.integer(selected_recording_ID)
     
-    new_call_ID <- max(recording_data$recording_master_df[,1]) + 1
+    new_call_ID <- max(recording_data$recording_master_df[,2]) + 1
+    
+    print("hi")
+    print(str(new_call_ID))
     
     for (i in 1:length(selected_recording_ID)) {
-      selected_row <- which(recording_data$recording_master_df[, 2] == selected_recording_ID[i])
-      recording_data$recording_master_df[selected_row, 1] <- new_call_ID
+      selected_row <- which(recording_data$recording_master_df[, 3] == selected_recording_ID[i])
+      recording_data$recording_master_df[selected_row, 2] <- new_call_ID
     }
     
     ### todo: calculate mean datetime
-    # mean_measured_call_datetime <- 
-    animal_ID = 0
-    new_call <- cbind(animal_ID, new_call_ID, paste(selected_recording_ID, collapse = ", "))
+    animal_ID = as.integer(0)
+    selected_recording_ID <- paste(selected_recording_ID, collapse = ", ")
+    new_call <- cbind(animal_ID, new_call_ID, selected_recording_ID)
     call_data$call_master_df <- rbind(call_data$call_master_df, new_call)
   })
   ###
   
-  ### set new animal ID
+  ### animals logic
+  animal_data <- reactiveValues(
+    animal_temp_df = data.frame(),
+    animal_master_df = data.frame(),
+  )
+  
+  # animals datatable
+  animal_table_proxy <- DT::dataTableProxy('animal_table')
+  output$animal_table <- DT::renderDataTable({
+    # todo: create proxy logic to stop having to reinitialise datatable 
+    req(input$fileRecordings)
+    print("update animal table")
+    
+    animal_data$animal_temp_df = animal_data$animal_master_df
+    
+    datatable(animal_data$animal_temp_df, editable = list(target = 'cell', disable = list(columns = c(0, 1, 2))), rownames = FALSE,  extensions = 'Buttons', options = list(dom = 'Bfrtip', buttons = I('colvis')))
+  })
+  #
+  
+  # set new animal ID
   observeEvent(input$set_new_animal_ID, {
     selected_rows = input$call_table_rows_selected
-    selected_call_ID <- call_data$call_master_df[selected_rows, 1]
+    selected_call_ID <- call_data$call_master_df[selected_rows, 2]
     selected_call_ID <- as.integer(selected_call_ID)
     
-    new_call_ID <- max(recording_data$recording_master_df[,1]) + 1
+    print(selected_call_ID)
     
-    for (i in 1:length(selected_recording_ID)) {
-      selected_row <- which(recording_data$recording_master_df[, 2] == selected_recording_ID[i])
-      recording_data$recording_master_df[selected_row, 1] <- new_call_ID
+    print(call_data$call_master_df[,2])
+    
+    print(str(call_data$call_master_df[,2]))
+    
+    # new_animal_ID <- max(call_data$call_master_df[,1]) + 1
+    
+    # print(new_animal_ID)
+    
+    for (i in 1:length(selected_call_ID)) {
+      selected_row <- which(call_data$call_master_df[, 2] == selected_call_ID[i])
+      print(selected_row)
+      call_data$call_master_df[selected_row, 1] <- 1
+      print(new_animal_ID)
     }
     
-    ### todo: calculate mean datetime
-    # mean_measured_call_datetime <- 
-    new_call <- cbind(new_call_ID, paste(selected_recording_ID, collapse = ", "))
-    call_data$call_master_df <- rbind(call_data$call_master_df, new_call)
+    new_animal <- cbind(new_animal_ID, paste(selected_call_ID, collapse = ", "))
+    animal_data$animal_master_df <- rbind(animal_data$animal_master_df, new_animal)
+    print(animal_data$animal_master_df)
   })
   ###
   
@@ -302,6 +333,7 @@ server <- function(input, output, session) {
     call_ID = array()
   )
   
+  # select rows in recordings datatable
   observeEvent(input$recording_table_rows_selected, ignoreNULL = FALSE, {
     selected_rows = input$recording_table_rows_selected
     if (is.null(selected_rows)) {
@@ -350,6 +382,19 @@ server <- function(input, output, session) {
       }
     }
   })
+  
+  # select rows in calls datatable
+  observeEvent(input$call_table_rows_selected, ignoreNULL = FALSE, {
+    selected_rows <- input$call_table_rows_selected
+    print(selected_rows)
+    if (is.null(selected_rows)) {
+      arrows$coordinates = array()
+      return()
+    }
+    
+    selected_recordings <- call_data$call_master_df$selected_recording_ID[selected_rows]
+    print(selected_recordings)
+  })
   ###
 
   ### file uploads
@@ -385,7 +430,8 @@ server <- function(input, output, session) {
     recording_data$recording_last_call_datetime <- recording_master_df$X.measured_call_datetime[length(recording_master_df$X.measured_call_datetime)]
     
     call_ID <- rep(0, nrow(recording_master_df))
-    recording_master_df <- cbind(call_ID, recording_master_df)
+    animal_ID <- rep(0, nrow(recording_master_df))
+    recording_master_df <- cbind(animal_ID, call_ID, recording_master_df)
     
     recording_master_df$X.recording_ID <- as.integer(recording_master_df$X.recording_ID)
     
