@@ -386,13 +386,13 @@ server <- function(input, output, session) {
   # select rows in calls datatable
   observeEvent(input$call_table_rows_selected, ignoreNULL = FALSE, {
     selected_rows <- input$call_table_rows_selected
-    print(selected_rows)
     if (is.null(selected_rows)) {
       arrows$coordinates = array()
       return()
     }
     
     selected_recordings <- call_data$call_master_df$selected_recording_ID[selected_rows]
+    selected_recordings <- as.integer(unlist(strsplit(selected_recordings, split = ",\\s*")))
     print(selected_recordings)
   })
   ###
