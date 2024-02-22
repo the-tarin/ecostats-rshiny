@@ -26,7 +26,8 @@ ui <- fluidPage(
            # Add UI elements for the left half
            # For example:
            ### map
-           leaflet::leafletOutput("map", width = "100%", height = 800)
+           leaflet::leafletOutput("map", width = "100%", height = 800),
+           actionButton("home_map_view", "Home Map View")
     ),
     
     # Right half
@@ -472,6 +473,13 @@ server <- function(input, output, session) {
                        options = providerTileOptions(noWrap = TRUE)
       ) %>%
       setView(lng = 0, lat = 0, zoom = 3)
+  })
+  
+  observeEvent(input$home_map_view, {
+    req(input$fileMic)
+    leafletProxy("map") %>%
+      fitBounds(lng1 = min(mic_data$mic_df$X.lng.), lat1 = min(mic_data$mic_df$X.lat.),
+                lng2 = max(mic_data$mic_df$X.lng.), lat2 = max(mic_data$mic_df$X.lat.))
   })
   ###
 }
