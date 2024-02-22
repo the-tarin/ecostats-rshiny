@@ -200,7 +200,7 @@ server <- function(input, output, session) {
     recording_data$recording_temp_df = recording_df_filtered
     
     
-    datatable(recording_df_filtered, editable = list(target = 'cell', disable = list(columns = c(1, 2, 3, 4, 5, 6, 7, 8))), rownames = FALSE,  extensions = 'Buttons', options = list(dom = 'Bfrtip', buttons = I('colvis')))
+    datatable(recording_df_filtered, editable = list(target = 'cell', disable = list(columns = c(2, 3, 4, 5, 6, 7, 8))), rownames = FALSE,  extensions = 'Buttons', options = list(dom = 'Bfrtip', buttons = I('colvis')))
   })
   ###
   
@@ -395,19 +395,34 @@ server <- function(input, output, session) {
     
     selected_recordings <- call_data$call_master_df$selected_recording_ID[selected_rows]
     selected_recordings <- as.integer(unlist(strsplit(selected_recordings, split = ",\\s*")))
-    print(selected_recordings)
     
     radius = 1000 # meters. todo: calculate the optimum radius given mic coordinates
     
-    arrow_coordinates_total <- array(NA, dim = c(2, 2, length(selected_mics)))
+    arrow_coordinates_total <- array(NA, dim = c(2, 2, length(selected_recordings)))
     # arrow_coordinates_total <- list()
     
     for (i in 1:length(selected_recordings)) {
       selected_row <- which(recording_data$recording_master_df$X.recording_ID. == selected_recordings[i])
       selected_mic <- recording_data$recording_temp_df$X.mic_ID.[selected_row]
-      print(selected_mic)
+      
+      selected_mic_lat <- mic_data$mic_df$X.lat.[selected_mic]
+      selected_mic_lng <- mic_data$mic_df$X.lng.[selected_mic]
+      
+      selected_mic_coordinates <- c(selected_mic_lng, selected_mic_lat)
+      selected_bearing <- recording_data$recording_master_df$X.measured_bearing.[selected_row]
+      
+      # calculate new arrowhead coordinates from mic coordinates and measured detection bearing
+      arrow_head_coordinates <- geosphere::destPoint(p = c(selected_mic_lng, selected_mic_lat), b = selected_bearing * (180/pi), d = radius)
+      arrow_coordinates <- rbind(selected_mic_coordinates, arrow_head_coordinates)
+      rownames(arrow_coordinates) = NULL
+      colnames(arrow_coordinates) = c("lng", "lat")
+      
+      arrow_coordinates_total[, , i] <- arrow_coordinates
     }
-    
+    # arrow_coordinates_total_lines <- SpatialLines(arrow_coordinates_total)
+    arrows$coordinates <- arrow_coordinates_total
+    arrows$recording_ID <- recording_data$recording_master_df$X.recording_ID[selected_rows]
+    arrows$call_ID <- recording_data$recording_master_df$call_ID[selected_rows]
   })
   ###
 
