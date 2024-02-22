@@ -67,11 +67,11 @@ ui <- fluidPage(
                            "text/comma-separated-values,text/plain",
                            ".csv")),
       
-      fileInput("fileGibbons", "Upload Gibbon Group Data (Ground Truth) in CSV Format",
-                multiple = TRUE,
-                accept = c("text/csv",
-                           "text/comma-separated-values,text/plain",
-                           ".csv")),
+      #fileInput("fileGibbons", "Upload Gibbon Group Data (Ground Truth) in CSV Format",
+      #          multiple = TRUE,
+      #          accept = c("text/csv",
+      #                     "text/comma-separated-values,text/plain",
+      #                     ".csv")),
       ###
       ### filters
       # dateInput(inputId = "selected_date", label = "Select Date"),
@@ -456,14 +456,14 @@ server <- function(input, output, session) {
     recording_data$recording_master_df <- recording_master_df
   })
   
-  gibbon_df <- reactive({
-    req(input$fileGibbons)
-    gibbon_df <- read.csv(input$fileGibbons$datapath,
-                          header = TRUE,
-                          sep = ",",
-                          quote = "")
-    return(gibbon_df)
-  })
+  #gibbon_df <- reactive({
+  #  req(input$fileGibbons)
+  #  gibbon_df <- read.csv(input$fileGibbons$datapath,
+  #                        header = TRUE,
+  #                        sep = ",",
+  #                        quote = "")
+  #  return(gibbon_df)
+  #})
   ###
   
   ### map
