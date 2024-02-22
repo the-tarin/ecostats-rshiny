@@ -175,6 +175,7 @@ server <- function(input, output, session) {
         lat = ~X.lat.,
         lng = ~X.lng.,
         radius = 6,
+        label = paste0("Mic ID: ", ~X.mic_id.),
         color = "red",
         stroke = FALSE, fillOpacity = 0.5
       ) %>%
@@ -394,20 +395,35 @@ server <- function(input, output, session) {
     selected_recordings <- call_data$call_master_df$selected_recording_ID[selected_rows]
     selected_recordings <- as.integer(unlist(strsplit(selected_recordings, split = ",\\s*")))
     print(selected_recordings)
+    
+    radius = 1000 # meters. todo: calculate the optimum radius given mic coordinates
+    
+    arrow_coordinates_total <- array(NA, dim = c(2, 2, length(selected_mics)))
+    # arrow_coordinates_total <- list()
+    
+    for (i in 1:length(selected_recordings)) {
+      selected_row <- which(recording_data$recording_master_df$X.recording_ID. == selected_recordings[i])
+      selected_mic <- recording_data$recording_temp_df$X.mic_ID.[selected_row]
+      print(selected_mic)
+    }
+    
   })
   ###
 
   ### file uploads
-  mic_df <- reactive({
+  mic_data <- reactiveValues(
+    mic_df <- data.frame()
+  )
+  
+  observeEvent(input$fileMic, {
     req(input$fileMic)
     mic_df <- read.csv(input$fileMic$datapath,
                        header = TRUE,
                        sep = ",",
                        quote = "")
     ### todo: convert UTM to lat / lon
-    return(mic_df)
   })
-  
+
   recording_data <- reactiveValues(
     recording_temp_df = data.frame(),
     recording_master_df = data.frame(),
