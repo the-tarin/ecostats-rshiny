@@ -167,20 +167,20 @@ server <- function(input, output, session) {
   ###
   
   ### add mic markers when mic_df is uploaded
-  observeEvent(input$fileMic, {
+  observeEvent(mic_data$mic_df, {
+    req(input$fileMic)
     leafletProxy("map") %>%
       clearMarkers() %>%
       addCircleMarkers(
-        data = mic_df(),
-        lat = ~X.lat.,
-        lng = ~X.lng.,
+        lat = mic_data$mic_df$X.lat.,
+        lng = mic_data$mic_df$X.lng.,
         radius = 6,
-        label = paste0("Mic ID: ", ~X.mic_id.),
+        label = paste0("Mic ID: ", mic_data$mic_df$X.mic_id.),
         color = "red",
         stroke = FALSE, fillOpacity = 0.5
       ) %>%
-      fitBounds(lng1 = min(mic_df()$X.lng.), lat1 = min(mic_df()$X.lat.),
-                lng2 = max(mic_df()$X.lng.), lat2 = max(mic_df()$X.lat.))
+      fitBounds(lng1 = min(mic_data$mic_df$X.lng.), lat1 = min(mic_data$mic_df$X.lat.),
+                lng2 = max(mic_data$mic_df$X.lng.), lat2 = max(mic_data$mic_df$X.lat.))
   })
   ###
   
@@ -349,8 +349,8 @@ server <- function(input, output, session) {
     # arrow_coordinates_total <- list()
     
     for (i in 1:length(selected_mics)) {
-      selected_mic_lat <- mic_df()$X.lat.[selected_mics[i]]
-      selected_mic_lng <- mic_df()$X.lng.[selected_mics[i]]
+      selected_mic_lat <- mic_data$mic_df$X.lat.[selected_mics[i]]
+      selected_mic_lng <- mic_data$mic_df$X.lng.[selected_mics[i]]
       
       selected_mic_coordinates <- c(selected_mic_lng, selected_mic_lat)
       
@@ -412,12 +412,12 @@ server <- function(input, output, session) {
 
   ### file uploads
   mic_data <- reactiveValues(
-    mic_df <- data.frame()
+    mic_df = data.frame()
   )
   
   observeEvent(input$fileMic, {
     req(input$fileMic)
-    mic_df <- read.csv(input$fileMic$datapath,
+    mic_data$mic_df <- read.csv(input$fileMic$datapath,
                        header = TRUE,
                        sep = ",",
                        quote = "")
