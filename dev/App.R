@@ -294,22 +294,29 @@ server <- function(input, output, session) {
     
     print(selected_call_ID)
     
+    # need to convert these two cols to int. Not sure why. Perhaps due to the cbind when making new calls observations
+    call_data$call_master_df[,1] <- as.integer(call_data$call_master_df[,1])
+    call_data$call_master_df[,2] <- as.integer(call_data$call_master_df[,2])
+    
     print(call_data$call_master_df[,2])
     
     print(str(call_data$call_master_df[,2]))
     
-    # new_animal_ID <- max(call_data$call_master_df[,1]) + 1
+    new_animal_ID <- max(call_data$call_master_df[,1]) + 1
     
-    # print(new_animal_ID)
+    print(new_animal_ID)
     
+    # set new animal ID to all selected rows of calls
     for (i in 1:length(selected_call_ID)) {
-      selected_row <- which(call_data$call_master_df[, 2] == selected_call_ID[i])
-      print(selected_row)
-      call_data$call_master_df[selected_row, 1] <- 1
-      print(new_animal_ID)
+      selected_row_call <- which(call_data$call_master_df[, 2] == selected_call_ID[i])
+      selected_row_recording <- which(recording_data$recording_master_df[, 2] == selected_call_ID[i])
+      
+      recording_data$recording_master_df[selected_row_recording, 1] <- new_animal_ID
+      call_data$call_master_df[selected_row_call, 1] <- new_animal_ID
     }
     
     new_animal <- cbind(new_animal_ID, paste(selected_call_ID, collapse = ", "))
+    # todo: cbind for recording ID
     animal_data$animal_master_df <- rbind(animal_data$animal_master_df, new_animal)
     print(animal_data$animal_master_df)
   })
@@ -399,7 +406,6 @@ server <- function(input, output, session) {
     radius = 1000 # meters. todo: calculate the optimum radius given mic coordinates
     
     arrow_coordinates_total <- array(NA, dim = c(2, 2, length(selected_recordings)))
-    # arrow_coordinates_total <- list()
     
     for (i in 1:length(selected_recordings)) {
       selected_row <- which(recording_data$recording_master_df$X.recording_ID. == selected_recordings[i])
