@@ -351,7 +351,8 @@ server <- function(input, output, session) {
     }
     radius <- 1000 # meters. todo: calculate the optimum radius given mic coordinates
     
-    arrow_coordinates_total <- array(NA, dim = c(2, 2, length(selected_rows)))
+    arrows_coordinates_total <- array(NA, dim = c(2, 2, length(selected_rows)))
+    dots_coordinates_total <- array(NA, dim = c(1, 2, length(selected_rows)))
     
     # separate arrow and dots row index based on whether bearing is NA or not
     selected_rows_with_bearing <- c()
@@ -368,48 +369,55 @@ server <- function(input, output, session) {
     selected_mic_IDs_without_bearing <- recording_data$recording_master_df$X.mic_ID[selected_rows_without_bearing]
     selected_mic_IDs_with_bearing <- recording_data$recording_master_df$X.mic_ID[selected_rows_with_bearing]
     
-    print(selected_rows_with_bearing)
-    print(selected_mic_IDs_with_bearing)
-    
-    for (i in 1:length(selected_rows_with_bearing)) {
-      mic_row_index <- which(mic_data$mic_df$X.mic_id. == selected_rows_with_bearing[i]) + 1
-      selected_mic_lat <- mic_data$mic_df$X.lat.[mic_row_index]
-      selected_mic_lng <- mic_data$mic_df$X.lng.[mic_row_index]
-      
-      selected_mic_coordinates <- c(selected_mic_lng, selected_mic_lat)
-      
-      selected_bearing <- recording_data$recording_master_df$X.measured_bearing[selected_rows_with_bearing[i]]
-      # calculate new arrowhead coordinates from mic coordinates and measured detection bearing
-      arrow_head_coordinates <- geosphere::destPoint(p = c(selected_mic_lng, selected_mic_lat), 
-                                                       b = selected_bearing * (180/pi), 
-                                                       d = radius)
-      print("hi")
-      arrow_coordinates <- rbind(selected_mic_coordinates, arrow_head_coordinates)
-      rownames(arrow_coordinates) <- NULL
-      colnames(arrow_coordinates) <- c("lng", "lat")
+    if (length(selected_rows_with_bearing) > 0) {
+      for (i in 1:length(selected_rows_with_bearing)) {
+        mic_row_index <- which(mic_data$mic_df$X.mic_id. == selected_rows_with_bearing[i]) + 1
+        selected_mic_lat <- mic_data$mic_df$X.lat.[mic_row_index]
+        selected_mic_lng <- mic_data$mic_df$X.lng.[mic_row_index]
         
-      arrow_coordinates_total[, , i] <- arrow_coordinates
+        selected_mic_coordinates <- c(selected_mic_lng, selected_mic_lat)
+        
+        selected_bearing <- recording_data$recording_master_df$X.measured_bearing[selected_rows_with_bearing[i]]
+        # calculate new arrowhead coordinates from mic coordinates and measured detection bearing
+        arrow_head_coordinates <- geosphere::destPoint(p = c(selected_mic_lng, selected_mic_lat), 
+                                                         b = selected_bearing * (180/pi), 
+                                                         d = radius)
+        arrow_coordinates <- rbind(selected_mic_coordinates, arrow_head_coordinates)
+        rownames(arrow_coordinates) <- NULL
+        colnames(arrow_coordinates) <- c("lng", "lat")
+          
+        arrows_coordinates_total[, , i] <- arrow_coordinates
+      }
     }
     
-    print("hi")
-    
-    for (i in 1:length(selected_rows_without_bearing)) {
-      mic_row_index <- which(mic_data$mic_df$X.mic_ID == selected_rows_without_bearing[i]) + 1
-      selected_mic_lat <- mic_data$mic_df$X.lat[mic_row_index]
-      selected_mic_lng <- mic_data$mic_df$X.lng[mic_row_index]
-      
-      selected_mic_coordinates <- c(selected_mic_lng, selected_mic_lat)
-      dots$coordinates[i] <- selected_mic_coordinates
+    if (length(selected_rows_without_bearing) > 0 ) {
+      for (i in 1:length(selected_rows_without_bearing)) {
+        mic_row_index <- which(mic_data$mic_df$X.mic_id == selected_rows_without_bearing[i]) + 1
+        selected_mic_lat <- mic_data$mic_df$X.lat[mic_row_index]
+        selected_mic_lng <- mic_data$mic_df$X.lng[mic_row_index]
+        
+        print(selected_mic_lng)
+        
+        selected_mic_coordinates <- c(selected_mic_lng, selected_mic_lat)
+        rownames(selected_mic_coordinates) <- NULL
+        colnames(selected_mic_coordinates) <- c("lng", "lat")
+        
+        dots_coordinates_total[, i] <- selected_mic_coordinates
+      }
     }
     
-    arrows$coordinates <- arrow_coordinates_total
+    arrows$coordinates <- arrows_coordinates_total
     arrows$recording_ID <- recording_data$recording_master_df$X.recording_ID[selected_rows_with_bearing]
     arrows$call_ID <- recording_data$recording_master_df$call_ID[selected_rows_with_bearing]
     arrows$gender_colour <- recording_data$recording_master_df$gender_colour[selected_rows_with_bearing]
     
+    dots$recording_ID <- dots_coordinates_total
     dots$recording_ID <- recording_data$recording_master_df$X.recording_ID[selected_rows_without_bearing]
     dots$call_ID <- recording_data$recording_master_df$call_ID[selected_rows_without_bearing]
     dots$gender_colour <- recording_data$recording_master_df$gender_colour[selected_rows_without_bearing]
+    
+    print(dots$coordinates)
+    print(arrows$coordinates)
   })
   
   
@@ -420,8 +428,7 @@ server <- function(input, output, session) {
     # prevents plotting arrows on declaration
     if (!any(is.na(arrows$coordinates))) {
       for (i in 1:dim(arrows$coordinates)[3]) {
-        # add logic if there is NA in the bearings
-        print(arrows$coordinates)
+        # todo: add points
         leafletProxy("map") %>% addArrowhead(data = arrows$coordinates[,,i], group = "all", layerId = paste0("arrow_", i), label = paste0("Recording ID: ", arrows$recording_ID[i], ", Call ID: ", arrows$call_ID[i]), color = arrows$gender_colour[i], opacity = 50, 
                                              options = arrowheadOptions(yawn = 40, fill = FALSE))
       }
