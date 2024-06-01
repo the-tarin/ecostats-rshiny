@@ -381,6 +381,7 @@ server <- function(input, output, session) {
     arrows$coordinates <- arrow_coordinates_total
     arrows$recording_ID <- recording_data$recording_master_df$X.recording_ID[selected_rows]
     arrows$call_ID <- recording_data$recording_master_df$call_ID[selected_rows]
+    arrows$gender_colour <- recording_data$recording_master_df$gender_colour[selected_rows]
   })
   
   # update map with bearing directions for selected recordings
@@ -390,7 +391,7 @@ server <- function(input, output, session) {
     # prevents plotting arrows on declaration
     if (!any(is.na(arrows$coordinates))) {
       for (i in 1:dim(arrows$coordinates)[3]) {
-        leafletProxy("map") %>% addArrowhead(data = arrows$coordinates[,,i], group = "all", layerId = paste0("arrow_", i), label = paste0("Recording ID: ", arrows$recording_ID[i], ", Call ID: ", arrows$call_ID[i]), color = "red", opacity = 50, 
+        leafletProxy("map") %>% addArrowhead(data = arrows$coordinates[,,i], group = "all", layerId = paste0("arrow_", i), label = paste0("Recording ID: ", arrows$recording_ID[i], ", Call ID: ", arrows$call_ID[i]), color = arrows$gender_colour[i], opacity = 50, 
                                              options = arrowheadOptions(yawn = 40, fill = FALSE))
       }
     }
@@ -433,7 +434,6 @@ server <- function(input, output, session) {
     arrows$coordinates <- arrow_coordinates_total
     arrows$recording_ID <- recording_data$recording_master_df$X.recording_ID[selected_rows]
     arrows$call_ID <- recording_data$recording_master_df$call_ID[selected_rows]
-    # arrows$gender_colour <- recording_data$recording_master_df$gender_colour[selected_rows]
   })
   ###
 
