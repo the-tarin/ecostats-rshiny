@@ -8,13 +8,9 @@ library(leaflet)
 library(leaflet.extras)
 library(leaflet.extras2)
 
-# coordinates
+# other
 library(geosphere)
-
-# dates and data manipulation
 library(lubridate)
-
-# datatables
 library(DT)
 
 ui <- fluidPage(
@@ -35,6 +31,9 @@ ui <- fluidPage(
            # Add UI elements for the right half
            # For example:
            tabsetPanel(id = "tabs",
+                       tabPanel("Mics",
+                                DT::dataTableOutput("mic_table"),
+                       ),
                        tabPanel("Recordings",
                                 DT::dataTableOutput("recording_table"),
                                 actionButton("set_new_call_ID", "Set New Call ID")
@@ -199,10 +198,15 @@ server <- function(input, output, session) {
     
     recording_data$recording_temp_df = recording_df_filtered
     
-    
     datatable(recording_df_filtered, editable = list(target = 'cell', disable = list(columns = c(2, 3, 4, 5, 6, 7, 8))), rownames = FALSE,  extensions = 'Buttons', options = list(dom = 'Bfrtip', buttons = I('colvis')))
   })
   ###
+  
+  ### mic datatable
+  output$mic_table <- DT::renderDataTable({
+    req(mic_data$mic_df)
+    datatable(mic_data$mic_df, rownames = FALSE)
+  })
   
   ### calls logic
   call_data <- reactiveValues(
@@ -298,13 +302,9 @@ server <- function(input, output, session) {
     call_data$call_master_df[,1] <- as.integer(call_data$call_master_df[,1])
     call_data$call_master_df[,2] <- as.integer(call_data$call_master_df[,2])
     
-    print(call_data$call_master_df[,2])
-    
-    print(str(call_data$call_master_df[,2]))
-    
     new_animal_ID <- max(call_data$call_master_df[,1]) + 1
     
-    print(new_animal_ID)
+    selected_recording_ID <- array()
     
     # set new animal ID to all selected rows of calls
     for (i in 1:length(selected_call_ID)) {
@@ -313,12 +313,16 @@ server <- function(input, output, session) {
       
       recording_data$recording_master_df[selected_row_recording, 1] <- new_animal_ID
       call_data$call_master_df[selected_row_call, 1] <- new_animal_ID
+      
+      selected_recording_ID <- recording_data$recording_master_df[selected_row_recording, 1]
+      selected_recording_ID <- cbind(selected_recording_ID, )
     }
     
-    new_animal <- cbind(new_animal_ID, paste(selected_call_ID, collapse = ", "))
-    # todo: cbind for recording ID
+    selected_call_ID <- paste(selected_call_ID, collapse = ", ")
+    selected_recording_ID <- paste(selected_recording_ID, collapse = ", ")
+    new_animal <- cbind(new_animal_ID, selected_call_ID, selected_recording_ID)
+
     animal_data$animal_master_df <- rbind(animal_data$animal_master_df, new_animal)
-    print(animal_data$animal_master_df)
   })
   ###
   
