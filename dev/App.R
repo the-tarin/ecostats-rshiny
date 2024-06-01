@@ -20,7 +20,6 @@ ui <- fluidPage(
     # Left half
     column(width = 6,
            # Add UI elements for the left half
-           # For example:
            ### map
            leaflet::leafletOutput("map", width = "100%", height = 800),
            actionButton("home_map_view", "Home Map View")
@@ -29,7 +28,6 @@ ui <- fluidPage(
     # Right half
     column(width = 6,
            # Add UI elements for the right half
-           # For example:
            tabsetPanel(id = "tabs",
                        tabPanel("Mics",
                                 DT::dataTableOutput("mic_table"),
@@ -65,18 +63,6 @@ ui <- fluidPage(
                 accept = c("text/csv",
                            "text/comma-separated-values,text/plain",
                            ".csv")),
-      
-      #fileInput("fileGibbons", "Upload Gibbon Group Data (Ground Truth) in CSV Format",
-      #          multiple = TRUE,
-      #          accept = c("text/csv",
-      #                     "text/comma-separated-values,text/plain",
-      #                     ".csv")),
-      ###
-      ### filters
-      # dateInput(inputId = "selected_date", label = "Select Date"),
-      
-      # timeInput(inputId = "selected_time_start", label = "Time Range of Data Start"),
-      # timeInput(inputId = "selected_time_end", label = "Time Range of Data End"),
       
       sliderInput(
         "selected_time_range",
@@ -207,6 +193,7 @@ server <- function(input, output, session) {
     req(mic_data$mic_df)
     datatable(mic_data$mic_df, rownames = FALSE)
   })
+  ###
   
   ### calls logic
   call_data <- reactiveValues(
@@ -339,50 +326,92 @@ server <- function(input, output, session) {
   )
   ###
   
-  ### adding arrows to map
+  ### adding arrows and dots to map
   arrows <- reactiveValues(
     coordinates = array(), 
     recording_ID = array(),
-    call_ID = array()
+    call_ID = array(),
+    gender_colour = array()
+  )
+  
+  dots <- reactiveValues(
+    coordinates = array(),
+    recording_ID = array(),
+    call_ID = array(),
+    gender_colour = array()
   )
   
   # select rows in recordings datatable
   observeEvent(input$recording_table_rows_selected, ignoreNULL = FALSE, {
-    selected_rows = input$recording_table_rows_selected
+    selected_rows <- input$recording_table_rows_selected
     if (is.null(selected_rows)) {
-      arrows$coordinates = array()
+      arrows$coordinates <- array()
+      dots$coordinates <- array()
       return()
     }
-    selected_mics = recording_data$recording_master_df$X.mic_ID.[selected_rows]
+    radius <- 1000 # meters. todo: calculate the optimum radius given mic coordinates
     
-    radius = 1000 # meters. todo: calculate the optimum radius given mic coordinates
-
-    arrow_coordinates_total <- array(NA, dim = c(2, 2, length(selected_mics)))
-    # arrow_coordinates_total <- list()
+    arrow_coordinates_total <- array(NA, dim = c(2, 2, length(selected_rows)))
     
-    for (i in 1:length(selected_mics)) {
-      selected_mic_lat <- mic_data$mic_df$X.lat.[selected_mics[i]]
-      selected_mic_lng <- mic_data$mic_df$X.lng.[selected_mics[i]]
+    # separate arrow and dots row index based on whether bearing is NA or not
+    selected_rows_with_bearing <- c()
+    selected_rows_without_bearing <- c()
+    
+    for (i in selected_rows) {
+      if (is.na(recording_data$recording_master_df$X.measured_bearing[i])) {
+        selected_rows_without_bearing <- c(selected_rows_without_bearing, i)
+      } else {
+        selected_rows_with_bearing <- c(selected_rows_with_bearing, i)
+      }
+    }
+    
+    selected_mic_IDs_without_bearing <- recording_data$recording_master_df$X.mic_ID[selected_rows_without_bearing]
+    selected_mic_IDs_with_bearing <- recording_data$recording_master_df$X.mic_ID[selected_rows_with_bearing]
+    
+    print(selected_rows_with_bearing)
+    print(selected_mic_IDs_with_bearing)
+    
+    for (i in 1:length(selected_rows_with_bearing)) {
+      mic_row_index <- which(mic_data$mic_df$X.mic_id. == selected_rows_with_bearing[i]) + 1
+      selected_mic_lat <- mic_data$mic_df$X.lat.[mic_row_index]
+      selected_mic_lng <- mic_data$mic_df$X.lng.[mic_row_index]
       
       selected_mic_coordinates <- c(selected_mic_lng, selected_mic_lat)
       
-      selected_bearings <- recording_data$recording_master_df$X.measured_bearing.[selected_rows[i]]
-      
+      selected_bearing <- recording_data$recording_master_df$X.measured_bearing[selected_rows_with_bearing[i]]
       # calculate new arrowhead coordinates from mic coordinates and measured detection bearing
-      arrow_head_coordinates <- geosphere::destPoint(p = c(selected_mic_lng, selected_mic_lat), b = selected_bearings * (180/pi), d = radius)
+      arrow_head_coordinates <- geosphere::destPoint(p = c(selected_mic_lng, selected_mic_lat), 
+                                                       b = selected_bearing * (180/pi), 
+                                                       d = radius)
+      print("hi")
       arrow_coordinates <- rbind(selected_mic_coordinates, arrow_head_coordinates)
-      rownames(arrow_coordinates) = NULL
-      colnames(arrow_coordinates) = c("lng", "lat")
-      
+      rownames(arrow_coordinates) <- NULL
+      colnames(arrow_coordinates) <- c("lng", "lat")
+        
       arrow_coordinates_total[, , i] <- arrow_coordinates
-      # arrow_coordinates_total[[i]] <- Line(arrow_coordinates)
     }
-    # arrow_coordinates_total_lines <- SpatialLines(arrow_coordinates_total)
+    
+    print("hi")
+    
+    for (i in 1:length(selected_rows_without_bearing)) {
+      mic_row_index <- which(mic_data$mic_df$X.mic_ID == selected_rows_without_bearing[i]) + 1
+      selected_mic_lat <- mic_data$mic_df$X.lat[mic_row_index]
+      selected_mic_lng <- mic_data$mic_df$X.lng[mic_row_index]
+      
+      selected_mic_coordinates <- c(selected_mic_lng, selected_mic_lat)
+      dots$coordinates[i] <- selected_mic_coordinates
+    }
+    
     arrows$coordinates <- arrow_coordinates_total
-    arrows$recording_ID <- recording_data$recording_master_df$X.recording_ID[selected_rows]
-    arrows$call_ID <- recording_data$recording_master_df$call_ID[selected_rows]
-    arrows$gender_colour <- recording_data$recording_master_df$gender_colour[selected_rows]
+    arrows$recording_ID <- recording_data$recording_master_df$X.recording_ID[selected_rows_with_bearing]
+    arrows$call_ID <- recording_data$recording_master_df$call_ID[selected_rows_with_bearing]
+    arrows$gender_colour <- recording_data$recording_master_df$gender_colour[selected_rows_with_bearing]
+    
+    dots$recording_ID <- recording_data$recording_master_df$X.recording_ID[selected_rows_without_bearing]
+    dots$call_ID <- recording_data$recording_master_df$call_ID[selected_rows_without_bearing]
+    dots$gender_colour <- recording_data$recording_master_df$gender_colour[selected_rows_without_bearing]
   })
+  
   
   # update map with bearing directions for selected recordings
   # implementation with array of matrices. todo: try using sp package objects
@@ -391,6 +420,8 @@ server <- function(input, output, session) {
     # prevents plotting arrows on declaration
     if (!any(is.na(arrows$coordinates))) {
       for (i in 1:dim(arrows$coordinates)[3]) {
+        # add logic if there is NA in the bearings
+        print(arrows$coordinates)
         leafletProxy("map") %>% addArrowhead(data = arrows$coordinates[,,i], group = "all", layerId = paste0("arrow_", i), label = paste0("Recording ID: ", arrows$recording_ID[i], ", Call ID: ", arrows$call_ID[i]), color = arrows$gender_colour[i], opacity = 50, 
                                              options = arrowheadOptions(yawn = 40, fill = FALSE))
       }
@@ -449,6 +480,7 @@ server <- function(input, output, session) {
                        sep = ",",
                        quote = "")
     ### todo: convert UTM to lat / lon
+    ### todo: check if all mic IDs are different
   })
 
   recording_data <- reactiveValues(
@@ -479,7 +511,7 @@ server <- function(input, output, session) {
     recording_master_df$X.measured_gender <- gsub('"', '', as.character(recording_master_df$X.measured_gender))
     gender <- recording_master_df$X.measured_gender
     gender_colour <- ifelse(gender == "M", "blue",
-                            ifelse(gender == "F", "red", "grey"))
+                            ifelse(gender == "F", "pink", "grey"))
     recording_master_df$gender_colour <- gender_colour
     
     recording_master_df <- cbind(animal_ID, call_ID, recording_master_df)
