@@ -433,6 +433,7 @@ server <- function(input, output, session) {
     arrows$coordinates <- arrow_coordinates_total
     arrows$recording_ID <- recording_data$recording_master_df$X.recording_ID[selected_rows]
     arrows$call_ID <- recording_data$recording_master_df$call_ID[selected_rows]
+    # arrows$gender_colour <- recording_data$recording_master_df$gender_colour[selected_rows]
   })
   ###
 
@@ -473,6 +474,14 @@ server <- function(input, output, session) {
     
     call_ID <- rep(0, nrow(recording_master_df))
     animal_ID <- rep(0, nrow(recording_master_df))
+    
+    # assign gender colour for arrows
+    recording_master_df$X.measured_gender <- gsub('"', '', as.character(recording_master_df$X.measured_gender))
+    gender <- recording_master_df$X.measured_gender
+    gender_colour <- ifelse(gender == "M", "blue",
+                            ifelse(gender == "F", "red", "grey"))
+    recording_master_df$gender_colour <- gender_colour
+    
     recording_master_df <- cbind(animal_ID, call_ID, recording_master_df)
     
     recording_master_df$X.recording_ID <- as.integer(recording_master_df$X.recording_ID)
