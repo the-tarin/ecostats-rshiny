@@ -327,26 +327,27 @@ server <- function(input, output, session) {
   ###
   
   ### adding arrows and dots to map
-  arrows <- reactiveValues(
-    coordinates = array(), 
-    recording_ID = array(),
-    call_ID = array(),
-    gender_colour = array()
-  )
-  
-  dots <- reactiveValues(
-    coordinates = array(),
-    recording_ID = array(),
-    call_ID = array(),
-    gender_colour = array()
+  markers <- reactiveValues(
+    arrows = list(
+      coordinates = array(), 
+      recording_ID = array(),
+      call_ID = array(),
+      gender_colour = array()
+    ),
+    dots = list(
+      coordinates = array(),
+      recording_ID = array(),
+      call_ID = array(),
+      gender_colour = array()
+    )
   )
   
   # select rows in recordings datatable
   observeEvent(input$recording_table_rows_selected, ignoreNULL = FALSE, {
     selected_rows <- input$recording_table_rows_selected
     if (is.null(selected_rows)) {
-      arrows$coordinates <- array()
-      dots$coordinates <- array()
+      markers$arrows$coordinates <- array()
+      markers$dots$coordinates <- array()
       return()
     }
     radius <- 1000 # meters. todo: calculate the optimum radius given mic coordinates
@@ -402,47 +403,49 @@ server <- function(input, output, session) {
     }
     
     if (length(selected_rows_with_bearing) > 0) {
-      arrows$coordinates <- arrows_coordinates_total
-      arrows$recording_ID <- recording_data$recording_master_df$X.recording_ID[selected_rows_with_bearing]
-      arrows$call_ID <- recording_data$recording_master_df$call_ID[selected_rows_with_bearing]
-      arrows$gender_colour <- recording_data$recording_master_df$gender_colour[selected_rows_with_bearing]
+      markers$arrows$coordinates <- arrows_coordinates_total
+      markers$arrows$recording_ID <- recording_data$recording_master_df$X.recording_ID[selected_rows_with_bearing]
+      markers$arrows$call_ID <- recording_data$recording_master_df$call_ID[selected_rows_with_bearing]
+      markers$arrows$gender_colour <- recording_data$recording_master_df$gender_colour[selected_rows_with_bearing]
     } else {
-      arrows$coordinates <- array()
+      markers$arrows$coordinates <- array()
     }
 
     if (length(selected_rows_without_bearing) > 0) {
-      dots$coordinates <- dots_coordinates_total
-      dots$recording_ID <- recording_data$recording_master_df$X.recording_ID[selected_rows_without_bearing]
-      dots$call_ID <- recording_data$recording_master_df$call_ID[selected_rows_without_bearing]
-      dots$gender_colour <- recording_data$recording_master_df$gender_colour[selected_rows_without_bearing]
+      markers$dots$coordinates <- dots_coordinates_total
+      markers$dots$recording_ID <- recording_data$recording_master_df$X.recording_ID[selected_rows_without_bearing]
+      markers$dots$call_ID <- recording_data$recording_master_df$call_ID[selected_rows_without_bearing]
+      markers$dots$gender_colour <- recording_data$recording_master_df$gender_colour[selected_rows_without_bearing]
     } else {
-      dots$coordinates <- array()
+      markers$dots$coordinates <- array()
     }
     
-    print(dots$coordinates)
-    print(arrows$coordinates)
+    print(markers$dots$coordinates)
+    print(markers$arrows$coordinates)
   })
   
   
   # update map with bearing directions for selected recordings
-  # implementation with array of matrices. todo: try using sp package objects
-  observeEvent(arrows$coordinates, {
+  observeEvent(markers, {
+    print("hi")
     leafletProxy("map") %>% clearGroup("all")
     # prevents plotting arrows on declaration
-    if (!any(is.na(arrows$coordinates))) {
+    if (!any(is.na(markers$arrows$coordinates))) {
       for (i in 1:dim(arrows$coordinates)[3]) {
         # todo: add points
-        leafletProxy("map") %>% addArrowhead(data = arrows$coordinates[,,i], group = "all", layerId = paste0("arrow_", i), label = paste0("Recording ID: ", arrows$recording_ID[i], ", Call ID: ", arrows$call_ID[i]), color = arrows$gender_colour[i], opacity = 50, 
+        leafletProxy("map") %>% addArrowhead(data = markers$arrows$coordinates[,,i], group = "all", layerId = paste0("arrow_", i), label = paste0("Recording ID: ", markers$arrows$recording_ID[i], ", Call ID: ", markers$arrows$call_ID[i]), color = markers$arrows$gender_colour[i], opacity = 50, 
                                              options = arrowheadOptions(yawn = 40, fill = FALSE))
       }
     }
   })
+  ###
   
+  ### what section is this under???
   # select rows in calls datatable
   observeEvent(input$call_table_rows_selected, ignoreNULL = FALSE, {
     selected_rows <- input$call_table_rows_selected
     if (is.null(selected_rows)) {
-      arrows$coordinates = array()
+      markers$arrows$coordinates = array()
       return()
     }
     
@@ -472,9 +475,9 @@ server <- function(input, output, session) {
       arrow_coordinates_total[, , i] <- arrow_coordinates
     }
     # arrow_coordinates_total_lines <- SpatialLines(arrow_coordinates_total)
-    arrows$coordinates <- arrow_coordinates_total
-    arrows$recording_ID <- recording_data$recording_master_df$X.recording_ID[selected_rows]
-    arrows$call_ID <- recording_data$recording_master_df$call_ID[selected_rows]
+    markers$arrows$coordinates <- arrow_coordinates_total
+    markers$arrows$recording_ID <- recording_data$recording_master_df$X.recording_ID[selected_rows]
+    markers$arrows$call_ID <- recording_data$recording_master_df$call_ID[selected_rows]
   })
   ###
 
