@@ -204,9 +204,9 @@ server <- function(input, output, session) {
   # remove calls
   observeEvent(input$remove_call, {
     selected_rows <- input$call_table_rows_selected
-    str(selected_rows)
     call_data$call_master_df <- call_data$call_master_df[-(selected_rows),]
     ### todo: reset calls_ID value set in the recordings dataframe
+    
   })
   #
 
@@ -219,7 +219,7 @@ server <- function(input, output, session) {
     
     call_data$call_temp_df = call_data$call_master_df
     
-    datatable(call_data$call_temp_df, editable = list(target = 'cell', disable = list(columns = c(0, 1, 2))), rownames = FALSE,  extensions = 'Buttons', options = list(dom = 'Bfrtip', buttons = I('colvis')))
+    datatable(call_data$call_temp_df, editable = list(target = 'cell', disable = list(columns = c(1, 2))), rownames = FALSE,  extensions = 'Buttons', options = list(dom = 'Bfrtip', buttons = I('colvis')))
   })
   #
   
@@ -240,16 +240,19 @@ server <- function(input, output, session) {
     selected_recording_ID <- recording_data$recording_temp_df[selected_rows, 3]
     selected_recording_ID <- as.integer(selected_recording_ID)
     
-    new_call_ID <- max(recording_data$recording_master_df[,2]) + 1
+    call_ID <- max(recording_data$recording_master_df[,2]) + 1
 
     recording_data$recording_master_df[selected_rows, 2] <- new_call_ID
     
     ### todo: calculate mean datetime
     animal_ID = as.integer(0)
-    selected_recording_ID <- paste(selected_recording_ID, collapse = ", ")
-    new_call <- cbind(animal_ID, new_call_ID, selected_recording_ID)
+    recording_ID <- paste(selected_recording_ID, collapse = ", ")
+    new_call <- cbind(animal_ID, call_ID, recording_ID)
     call_data$call_master_df <- rbind(call_data$call_master_df, new_call)
   })
+  
+  # edit call ID in 
+  
   ###
   
   ### animals logic
