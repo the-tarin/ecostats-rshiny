@@ -171,7 +171,7 @@ server <- function(input, output, session) {
   ###
   
   ### recordings datatable
-  recording_table_proxy <- DT::dataTableProxy('recording_table')
+  recording_table_proxy <- DT::dataTableProxy('recording_table') # currently unused, todo: figure out how to use table proxy
   output$recording_table <- DT::renderDataTable({
     # todo: create proxy logic to stop having to reinitialise datatable 
     req(input$fileRecordings)
@@ -241,14 +241,8 @@ server <- function(input, output, session) {
     selected_recording_ID <- as.integer(selected_recording_ID)
     
     new_call_ID <- max(recording_data$recording_master_df[,2]) + 1
-    
-    print("hi")
-    print(str(new_call_ID))
-    
-    for (i in 1:length(selected_recording_ID)) {
-      selected_row <- which(recording_data$recording_master_df[, 3] == selected_recording_ID[i])
-      recording_data$recording_master_df[selected_row, 2] <- new_call_ID
-    }
+
+    recording_data$recording_master_df[selected_rows, 2] <- new_call_ID
     
     ### todo: calculate mean datetime
     animal_ID = as.integer(0)
