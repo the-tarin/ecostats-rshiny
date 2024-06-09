@@ -184,7 +184,7 @@ server <- function(input, output, session) {
     
     recording_data$recording_temp_df = recording_df_filtered
     
-    datatable(recording_df_filtered, editable = list(target = 'cell', disable = list(columns = c(0, 2, 3, 4, 5, 6, 7, 8))), rownames = FALSE,  extensions = 'Buttons', options = list(dom = 'Bfrtip', buttons = I('colvis')))
+    datatable(recording_df_filtered, editable = list(target = 'cell', disable = list(columns = c(1, 2, 3, 4, 5, 6, 7, 8))), rownames = FALSE,  extensions = 'Buttons', options = list(dom = 'Bfrtip', buttons = I('colvis')))
   })
   ###
   
@@ -231,20 +231,22 @@ server <- function(input, output, session) {
   # save changes to call ID from recording datatable edits
   observeEvent(input$recording_table_cell_edit, {
     edit = input$recording_table_cell_edit
-    # find the recording ID which has been edited from datatable (temp dataframe) and save changes to master dataframe
-    edited_recording_ID <- recording_data$recording_temp_df[edit$row, edit$col+2]
-    recording_data$recording_master_df[recording_data$recording_master_df[,3] == edited_recording_ID, 2] <- edit$value
-    print(edited_recording_ID)
+    edited_recording_ID <- recording_data$recording_temp_df$X.recording_ID.[edit$row]
+    recording_data$recording_master_df$call_ID[recording_data$recording_master_df$X.recording_ID. == edited_recording_ID] <- edit$value
     ### todo: logic to export data to calls datatable
     if (edit$value %in% call_data$call_master_df$call_ID) {
       # append recording ID to list of recording IDs
       existing_recording_IDs <- call_data$call_master_df$recording_ID[which(call_data$call_master_df$call_ID == edit$value)]
+      # todo: fix issue where there is only 1 recording ID
       existing_recording_IDs <- as.integer(unlist(strsplit(existing_recording_IDs, split = ",\\s*")))
       existing_recording_IDs <- c(existing_recording_IDs, edited_recording_ID)
       recording_IDs <- paste(existing_recording_IDs, ", ")
       call_data$call_master_df$recording_ID[which(call_data$call_master_df$call_ID == edit$value)] <- recording_IDs
     } else {
       # create new call row
+      new_call <- cbind(edit$value, edited_recording_ID)
+      colnames(new_call) <- c("call_ID", "recording_ID")
+      call_data$call_master_df <- rbind(call_data$call_master_df, new_call)
     }
   })
   #
