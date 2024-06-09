@@ -223,7 +223,7 @@ server <- function(input, output, session) {
     req(input$fileRecordings)
     print("update calls table")
     call_data$call_temp_df = call_data$call_master_df
-    datatable(call_data$call_temp_df, editable = list(target = 'cell', disable = list(columns = c(1, 2))), rownames = FALSE,  extensions = 'Buttons', options = list(dom = 'Bfrtip', buttons = I('colvis')))
+    datatable(call_data$call_temp_df, editable = list(target = 'cell', disable = list(columns = c(0, 1))), rownames = FALSE,  extensions = 'Buttons', options = list(dom = 'Bfrtip', buttons = I('colvis')))
   })
   #
   
@@ -232,14 +232,14 @@ server <- function(input, output, session) {
     edit = input$recording_table_cell_edit
     edited_recording_ID <- recording_data$recording_temp_df$X.recording_ID.[edit$row]
     recording_data$recording_master_df$call_ID[recording_data$recording_master_df$X.recording_ID. == edited_recording_ID] <- edit$value
-    ### todo: logic to export data to calls datatable
+
+    # append recording ID to list of recording IDs if call ID exists, otherwise create new call ID
     if (edit$value %in% call_data$call_master_df$call_ID) {
-      # append recording ID to list of recording IDs
       existing_recording_IDs <- call_data$call_master_df$recording_ID[which(call_data$call_master_df$call_ID == edit$value)]
       # todo: fix issue where there is only 1 recording ID
       existing_recording_IDs <- as.integer(unlist(strsplit(existing_recording_IDs, split = ",\\s*")))
       existing_recording_IDs <- c(existing_recording_IDs, edited_recording_ID)
-      recording_IDs <- paste(existing_recording_IDs, ", ")
+      recording_IDs <- paste(existing_recording_IDs, collapse = ", ")
       call_data$call_master_df$recording_ID[which(call_data$call_master_df$call_ID == edit$value)] <- recording_IDs
     } else {
       # create new call row
