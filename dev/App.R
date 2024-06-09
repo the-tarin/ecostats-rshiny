@@ -206,11 +206,12 @@ server <- function(input, output, session) {
     selected_rows <- input$call_table_rows_selected
     selected_recording_IDs <- call_data$call_master_df$recording_ID[selected_rows]
     selected_recording_IDs <- as.integer(unlist(strsplit(selected_recording_IDs, split = ",\\s*")))
+    print(selected_recording_IDs)
     call_data$call_master_df <- call_data$call_master_df[-(selected_rows),]
 
     for (i in 1:length(selected_recording_IDs)) {
-      selected_recording_row <- which(recording_data$recording_master_df$X.recording_X. == selected_recording_IDs[i])
-      recording_data$recording_master_df$X.recording_X.[selected_recording_row] <- 0
+      selected_recording_row <- which(recording_data$recording_master_df$X.recording_ID. == selected_recording_IDs[i])
+      recording_data$recording_master_df$call_ID[selected_recording_row] <- 0
     }
   })
   #
@@ -221,9 +222,7 @@ server <- function(input, output, session) {
     # todo: create proxy logic to stop having to reinitialise datatable 
     req(input$fileRecordings)
     print("update calls table")
-    
     call_data$call_temp_df = call_data$call_master_df
-    
     datatable(call_data$call_temp_df, editable = list(target = 'cell', disable = list(columns = c(1, 2))), rownames = FALSE,  extensions = 'Buttons', options = list(dom = 'Bfrtip', buttons = I('colvis')))
   })
   #
@@ -431,7 +430,6 @@ server <- function(input, output, session) {
     }
   })
   
-  
   # update map with bearing directions for selected recordings which do have a bearing
   observeEvent(arrows$coordinates, {
     leafletProxy("map") %>% clearGroup("arrows")
@@ -509,7 +507,6 @@ server <- function(input, output, session) {
                          header = TRUE,
                          sep = ",",
                          quote = "")
-    ### todo: convert UTM to lat / lon
     ### todo: check if all mic IDs are different
   })
 
@@ -552,16 +549,6 @@ server <- function(input, output, session) {
     recording_data$recording_temp_df <- recording_master_df
     recording_data$recording_master_df <- recording_master_df
   })
-  
-  #gibbon_df <- reactive({
-  #  req(input$fileGibbons)
-  #  gibbon_df <- read.csv(input$fileGibbons$datapath,
-  #                        header = TRUE,
-  #                        sep = ",",
-  #                        quote = "")
-  #  return(gibbon_df)
-  #})
-  ###
   
   ### map
   output$map <- leaflet::renderLeaflet({
