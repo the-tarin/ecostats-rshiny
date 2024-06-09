@@ -209,8 +209,8 @@ server <- function(input, output, session) {
     call_data$call_master_df <- call_data$call_master_df[-(selected_rows),]
 
     for (i in 1:length(selected_recording_IDs)) {
-      selected_recording_row <- which(recording_data$recording_master_df[, 3] == selected_recording_IDs[i])
-      recording_data$recording_master_df[selected_recording_row, 2] <- 0
+      selected_recording_row <- which(recording_data$recording_master_df$X.recording_X. == selected_recording_IDs[i])
+      recording_data$recording_master_df$X.recording_X.[selected_recording_row] <- 0
     }
   })
   #
@@ -253,14 +253,12 @@ server <- function(input, output, session) {
   
   # set new call ID
   observeEvent(input$set_new_call_ID, {
-    print("hi there")
     selected_rows = input$recording_table_rows_selected
-    selected_recording_ID <- recording_data$recording_temp_df[selected_rows, 3]
+    selected_recording_ID <- recording_data$recording_temp_df$X.recording_ID.[selected_rows]
     selected_recording_ID <- as.integer(selected_recording_ID)
     
-    call_ID <- max(recording_data$recording_master_df[,2]) + 1
-
-    recording_data$recording_master_df[selected_rows, 2] <- call_ID
+    call_ID <- max(recording_data$recording_master_df$call_ID) + 1
+    recording_data$recording_master_df$call_ID[selected_rows] <- call_ID
     
     ### todo: calculate mean datetime
     # animal_ID = as.integer(0)
