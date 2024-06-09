@@ -39,11 +39,11 @@ ui <- fluidPage(
                        tabPanel("Calls",
                                 DT::dataTableOutput("call_table"),
                                 actionButton("remove_call", "Remove Call"),
-                                actionButton("set_new_animal_ID", "Group Call to Animal")
+                                # actionButton("set_new_animal_ID", "Group Call to Animal")
                        ),
-                       tabPanel("Animals",
-                                DT::dataTableOutput("animal_table")
-                       ),
+                       # tabPanel("Animals",
+                       #          DT::dataTableOutput("animal_table")
+                       # ),
            ),
            downloadButton("download_button", "Download Recordings"),
     )
@@ -184,7 +184,7 @@ server <- function(input, output, session) {
     
     recording_data$recording_temp_df = recording_df_filtered
     
-    datatable(recording_df_filtered, editable = list(target = 'cell', disable = list(columns = c(2, 3, 4, 5, 6, 7, 8))), rownames = FALSE,  extensions = 'Buttons', options = list(dom = 'Bfrtip', buttons = I('colvis')))
+    datatable(recording_df_filtered, editable = list(target = 'cell', disable = list(columns = c(0, 2, 3, 4, 5, 6, 7, 8))), rownames = FALSE,  extensions = 'Buttons', options = list(dom = 'Bfrtip', buttons = I('colvis')))
   })
   ###
   
@@ -207,8 +207,7 @@ server <- function(input, output, session) {
     selected_recording_IDs <- call_data$call_master_df$recording_ID[selected_rows]
     selected_recording_IDs <- as.integer(unlist(strsplit(selected_recording_IDs, split = ",\\s*")))
     call_data$call_master_df <- call_data$call_master_df[-(selected_rows),]
-    
-    ### todo: deal with case where we select multiple rows
+
     for (i in 1:length(selected_recording_IDs)) {
       selected_recording_row <- which(recording_data$recording_master_df[, 3] == selected_recording_IDs[i])
       recording_data$recording_master_df[selected_recording_row, 2] <- 0
@@ -229,14 +228,24 @@ server <- function(input, output, session) {
   })
   #
   
-  # save changes from datatable edits
+  # save changes to call ID from recording datatable edits
   observeEvent(input$recording_table_cell_edit, {
     edit = input$recording_table_cell_edit
     # find the recording ID which has been edited from datatable (temp dataframe) and save changes to master dataframe
-    edited_recording_ID <- recording_data$recording_temp_df[edit$row, edit$col+3]
-    recording_data$recording_master_df[recording_data$recording_master_df[,2] == edited_recording_ID, 2] <- edit$value
-    
+    edited_recording_ID <- recording_data$recording_temp_df[edit$row, edit$col+2]
+    recording_data$recording_master_df[recording_data$recording_master_df[,3] == edited_recording_ID, 2] <- edit$value
+    print(edited_recording_ID)
     ### todo: logic to export data to calls datatable
+    if (edit$value %in% call_data$call_master_df$call_ID) {
+      # append recording ID to list of recording IDs
+      existing_recording_IDs <- call_data$call_master_df$recording_ID[which(call_data$call_master_df$call_ID == edit$value)]
+      existing_recording_IDs <- as.integer(unlist(strsplit(existing_recording_IDs, split = ",\\s*")))
+      existing_recording_IDs <- c(existing_recording_IDs, edited_recording_ID)
+      recording_IDs <- paste(existing_recording_IDs, ", ")
+      call_data$call_master_df$recording_ID[which(call_data$call_master_df$call_ID == edit$value)] <- recording_IDs
+    } else {
+      # create new call row
+    }
   })
   #
   
@@ -252,69 +261,67 @@ server <- function(input, output, session) {
     recording_data$recording_master_df[selected_rows, 2] <- call_ID
     
     ### todo: calculate mean datetime
-    animal_ID = as.integer(0)
+    # animal_ID = as.integer(0)
     recording_ID <- paste(selected_recording_ID, collapse = ", ")
-    new_call <- cbind(animal_ID, call_ID, recording_ID)
+    new_call <- cbind(call_ID, recording_ID)
+    # new_call <- cbind(animal_ID, call_ID, recording_ID)
     call_data$call_master_df <- rbind(call_data$call_master_df, new_call)
   })
-  
-  # edit call ID in 
-  
   ###
   
   ### animals logic
-  animal_data <- reactiveValues(
-    animal_temp_df = data.frame(),
-    animal_master_df = data.frame(),
-  )
-  
-  # animals datatable
-  animal_table_proxy <- DT::dataTableProxy('animal_table')
-  output$animal_table <- DT::renderDataTable({
-    # todo: create proxy logic to stop having to reinitialise datatable 
-    req(input$fileRecordings)
-    print("update animal table")
-    
-    animal_data$animal_temp_df = animal_data$animal_master_df
-    
-    datatable(animal_data$animal_temp_df, editable = list(target = 'cell', disable = list(columns = c(0, 1, 2))), rownames = FALSE,  extensions = 'Buttons', options = list(dom = 'Bfrtip', buttons = I('colvis')))
-  })
-  #
-  
-  # set new animal ID
-  observeEvent(input$set_new_animal_ID, {
-    selected_rows = input$call_table_rows_selected
-    selected_call_ID <- call_data$call_master_df[selected_rows, 2]
-    selected_call_ID <- as.integer(selected_call_ID)
-    
-    print(selected_call_ID)
-    
-    # need to convert these two cols to int. Not sure why. Perhaps due to the cbind when making new calls observations
-    call_data$call_master_df[,1] <- as.integer(call_data$call_master_df[,1])
-    call_data$call_master_df[,2] <- as.integer(call_data$call_master_df[,2])
-    
-    new_animal_ID <- max(call_data$call_master_df[,1]) + 1
-    
-    selected_recording_ID <- array()
-    
-    # set new animal ID to all selected rows of calls
-    for (i in 1:length(selected_call_ID)) {
-      selected_row_call <- which(call_data$call_master_df[, 2] == selected_call_ID[i])
-      selected_row_recording <- which(recording_data$recording_master_df[, 2] == selected_call_ID[i])
-      
-      recording_data$recording_master_df[selected_row_recording, 1] <- new_animal_ID
-      call_data$call_master_df[selected_row_call, 1] <- new_animal_ID
-      
-      selected_recording_ID <- recording_data$recording_master_df[selected_row_recording, 1]
-      selected_recording_ID <- cbind(selected_recording_ID, )
-    }
-    
-    selected_call_ID <- paste(selected_call_ID, collapse = ", ")
-    selected_recording_ID <- paste(selected_recording_ID, collapse = ", ")
-    new_animal <- cbind(new_animal_ID, selected_call_ID, selected_recording_ID)
-
-    animal_data$animal_master_df <- rbind(animal_data$animal_master_df, new_animal)
-  })
+  # animal_data <- reactiveValues(
+  #   animal_temp_df = data.frame(),
+  #   animal_master_df = data.frame(),
+  # )
+  # 
+  # # animals datatable
+  # animal_table_proxy <- DT::dataTableProxy('animal_table')
+  # output$animal_table <- DT::renderDataTable({
+  #   # todo: create proxy logic to stop having to reinitialise datatable 
+  #   req(input$fileRecordings)
+  #   print("update animal table")
+  #   
+  #   animal_data$animal_temp_df = animal_data$animal_master_df
+  #   
+  #   datatable(animal_data$animal_temp_df, editable = list(target = 'cell', disable = list(columns = c(0, 1, 2))), rownames = FALSE,  extensions = 'Buttons', options = list(dom = 'Bfrtip', buttons = I('colvis')))
+  # })
+  # #
+  # 
+  # # set new animal ID
+  # observeEvent(input$set_new_animal_ID, {
+  #   selected_rows = input$call_table_rows_selected
+  #   selected_call_ID <- call_data$call_master_df[selected_rows, 2]
+  #   selected_call_ID <- as.integer(selected_call_ID)
+  #   
+  #   print(selected_call_ID)
+  #   
+  #   # need to convert these two cols to int. Not sure why. Perhaps due to the cbind when making new calls observations
+  #   call_data$call_master_df[,1] <- as.integer(call_data$call_master_df[,1])
+  #   call_data$call_master_df[,2] <- as.integer(call_data$call_master_df[,2])
+  #   
+  #   new_animal_ID <- max(call_data$call_master_df[,1]) + 1
+  #   
+  #   selected_recording_ID <- array()
+  #   
+  #   # set new animal ID to all selected rows of calls
+  #   for (i in 1:length(selected_call_ID)) {
+  #     selected_row_call <- which(call_data$call_master_df[, 2] == selected_call_ID[i])
+  #     selected_row_recording <- which(recording_data$recording_master_df[, 2] == selected_call_ID[i])
+  #     
+  #     recording_data$recording_master_df[selected_row_recording, 1] <- new_animal_ID
+  #     call_data$call_master_df[selected_row_call, 1] <- new_animal_ID
+  #     
+  #     selected_recording_ID <- recording_data$recording_master_df[selected_row_recording, 1]
+  #     selected_recording_ID <- cbind(selected_recording_ID, )
+  #   }
+  #   
+  #   selected_call_ID <- paste(selected_call_ID, collapse = ", ")
+  #   selected_recording_ID <- paste(selected_recording_ID, collapse = ", ")
+  #   new_animal <- cbind(new_animal_ID, selected_call_ID, selected_recording_ID)
+  # 
+  #   animal_data$animal_master_df <- rbind(animal_data$animal_master_df, new_animal)
+  # })
   ###
   
   ### download recordings
@@ -499,9 +506,9 @@ server <- function(input, output, session) {
   observeEvent(input$fileMic, {
     req(input$fileMic)
     mic_data$mic_df <- read.csv(input$fileMic$datapath,
-                       header = TRUE,
-                       sep = ",",
-                       quote = "")
+                         header = TRUE,
+                         sep = ",",
+                         quote = "")
     ### todo: convert UTM to lat / lon
     ### todo: check if all mic IDs are different
   })
@@ -528,7 +535,7 @@ server <- function(input, output, session) {
     recording_data$recording_last_call_datetime <- recording_master_df$X.measured_call_datetime[length(recording_master_df$X.measured_call_datetime)]
     
     call_ID <- rep(0, nrow(recording_master_df))
-    animal_ID <- rep(0, nrow(recording_master_df))
+    # animal_ID <- rep(0, nrow(recording_master_df))
     
     # assign gender colour for arrows
     recording_master_df$X.measured_gender <- gsub('"', '', as.character(recording_master_df$X.measured_gender))
@@ -537,7 +544,8 @@ server <- function(input, output, session) {
                             ifelse(gender == "F", "pink", "grey"))
     recording_master_df$gender_colour <- gender_colour
     
-    recording_master_df <- cbind(animal_ID, call_ID, recording_master_df)
+    # recording_master_df <- cbind(animal_ID, call_ID, recording_master_df)
+    recording_master_df <- cbind(call_ID, recording_master_df)
     
     recording_master_df$X.recording_ID <- as.integer(recording_master_df$X.recording_ID)
     
