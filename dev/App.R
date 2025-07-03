@@ -341,14 +341,14 @@ server <- function(input, output, session) {
     coordinates = array(), 
     recording_ID = array(),
     call_ID = array(),
-    gender_colour = array()
+    sex_colour = array()
   )
   
   dots <- reactiveValues(
     coordinates = array(),
     recording_ID = array(),
     call_ID = array(),
-    gender_colour = array()
+    sex_colour = array()
   )
   
   # select rows in recordings datatable
@@ -415,7 +415,7 @@ server <- function(input, output, session) {
       arrows$coordinates <- arrows_coordinates_total
       arrows$recording_ID <- recording_data$recording_master_df$X.recording_ID[selected_rows_with_bearing]
       arrows$call_ID <- recording_data$recording_master_df$call_ID[selected_rows_with_bearing]
-      arrows$gender_colour <- recording_data$recording_master_df$gender_colour[selected_rows_with_bearing]
+      arrows$sex_colour <- recording_data$recording_master_df$sex_colour[selected_rows_with_bearing]
     } else {
       arrows$coordinates <- array()
     }
@@ -424,7 +424,7 @@ server <- function(input, output, session) {
       dots$coordinates <- dots_coordinates_total
       dots$recording_ID <- recording_data$recording_master_df$X.recording_ID[selected_rows_without_bearing]
       dots$call_ID <- recording_data$recording_master_df$call_ID[selected_rows_without_bearing]
-      dots$gender_colour <- recording_data$recording_master_df$gender_colour[selected_rows_without_bearing]
+      dots$sex_colour <- recording_data$recording_master_df$sex_colour[selected_rows_without_bearing]
     } else {
       dots$coordinates <- array()
     }
@@ -436,7 +436,7 @@ server <- function(input, output, session) {
     # prevents plotting arrows on declaration
     if (!any(is.na(arrows$coordinates))) {
       for (i in 1:dim(arrows$coordinates)[3]) {
-        leafletProxy("map") %>% addArrowhead(data = arrows$coordinates[,,i], group = "arrows", layerId = paste0("arrow_", i), label = paste0("Recording ID: ", arrows$recording_ID[i], ", Call ID: ", arrows$call_ID[i]), color = arrows$gender_colour[i], opacity = 50, 
+        leafletProxy("map") %>% addArrowhead(data = arrows$coordinates[,,i], group = "arrows", layerId = paste0("arrow_", i), label = paste0("Recording ID: ", arrows$recording_ID[i], ", Call ID: ", arrows$call_ID[i]), color = arrows$sex_colour[i], opacity = 50, 
                                              options = arrowheadOptions(yawn = 40, fill = FALSE))
       }
     }
@@ -448,7 +448,7 @@ server <- function(input, output, session) {
     # prevents plotting arrows on declaration
     if (!any(is.na(dots$coordinates))) {
       for (i in 1:dim(dots$coordinates)[3]) {
-        leafletProxy("map") %>% addCircleMarkers(lat = dots$coordinates[,,i][2], lng = dots$coordinates[,,i][1], radius = 8, group = "dots", layerId = paste0("dot_", i), label = paste0("Recording ID: ", dots$recording_ID[i], ", Call ID: ", dots$call_ID[i]), color = dots$gender_colour[i], stroke = FALSE, fillOpacity = 50)
+        leafletProxy("map") %>% addCircleMarkers(lat = dots$coordinates[,,i][2], lng = dots$coordinates[,,i][1], radius = 8, group = "dots", layerId = paste0("dot_", i), label = paste0("Recording ID: ", dots$recording_ID[i], ", Call ID: ", dots$call_ID[i]), color = dots$sex_colour[i], stroke = FALSE, fillOpacity = 50)
       }
     }
   })
@@ -534,12 +534,12 @@ server <- function(input, output, session) {
     call_ID <- rep(0, nrow(recording_master_df))
     # animal_ID <- rep(0, nrow(recording_master_df))
     
-    # assign gender colour for arrows
-    recording_master_df$X.measured_gender <- gsub('"', '', as.character(recording_master_df$X.measured_gender))
-    gender <- recording_master_df$X.measured_gender
-    gender_colour <- ifelse(gender == "M", "blue",
-                            ifelse(gender == "F", "pink", "grey"))
-    recording_master_df$gender_colour <- gender_colour
+    # assign sex colour for arrows
+    recording_master_df$X.measured_sex <- gsub('"', '', as.character(recording_master_df$X.measured_sex))
+    sex <- recording_master_df$X.measured_sex
+    sex_colour <- ifelse(sex == "M", "blue",
+                            ifelse(sex == "F", "pink", "grey"))
+    recording_master_df$sex_colour <- sex_colour
     
     # recording_master_df <- cbind(animal_ID, call_ID, recording_master_df)
     recording_master_df <- cbind(call_ID, recording_master_df)
