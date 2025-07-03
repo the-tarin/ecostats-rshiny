@@ -537,8 +537,8 @@ server <- function(input, output, session) {
     # assign sex colour for arrows
     recording_master_df$X.measured_sex <- gsub('"', '', as.character(recording_master_df$X.measured_sex))
     sex <- recording_master_df$X.measured_sex
-    sex_colour <- ifelse(sex == "M", "blue",
-                            ifelse(sex == "F", "pink", "grey"))
+    sex_colour <- ifelse(sex == "M", "black",
+                            ifelse(sex == "F", "yellow", "grey"))
     recording_master_df$sex_colour <- sex_colour
     
     # recording_master_df <- cbind(animal_ID, call_ID, recording_master_df)
